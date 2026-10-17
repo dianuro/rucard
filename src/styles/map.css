@@ -1,0 +1,181 @@
+/* ───────────────────────── 回廊地图 ───────────────────────── */
+
+.map-screen {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.map-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px 6px;
+}
+.map-head h2 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 0.28em;
+  color: var(--panel);
+}
+.map-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 20px 40px;
+  scrollbar-width: thin;
+}
+.map-canvas {
+  position: relative;
+  width: 620px;
+  margin: 0 auto;
+}
+
+/* 左侧层数标尺 */
+.layer-mark {
+  position: absolute;
+  left: 10px;
+  transform: translateY(-50%);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  color: #6f629b;
+  padding: 2px 8px;
+  border-left: 2px solid #6a55c955;
+  font-variant-numeric: tabular-nums;
+}
+.layer-mark.here {
+  color: var(--gold);
+  border-left-color: var(--gold);
+}
+.map-canvas svg.edges {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.map-canvas svg.edges path {
+  fill: none;
+  stroke: #6a55c9;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 7 8;
+  opacity: 0.5;
+}
+.map-canvas svg.edges path.active {
+  stroke: var(--gold);
+  opacity: 0.95;
+  stroke-dasharray: none;
+  filter: drop-shadow(0 0 6px #f2bc4688);
+}
+
+.mnode {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 68px;
+  height: 68px;
+  display: grid;
+  place-items: center;
+  border-radius: 22px;
+  background: #1d1640;
+  border: var(--bd) solid var(--edge);
+  color: var(--nc, #8f82b8);
+  box-shadow: var(--hard-sm);
+  transition: transform 0.18s var(--ease-pop), box-shadow 0.18s, background 0.2s;
+}
+.mnode[data-kind='battle'] {
+  --nc: #9c8ce0;
+}
+.mnode[data-kind='elite'] {
+  --nc: #f0708f;
+}
+.mnode[data-kind='event'] {
+  --nc: #5fd4c4;
+}
+.mnode[data-kind='rest'] {
+  --nc: #abd95f;
+}
+.mnode[data-kind='shop'] {
+  --nc: #f2bc46;
+}
+.mnode[data-kind='treasure'] {
+  --nc: #7fb0f7;
+}
+.mnode[data-kind='boss'] {
+  --nc: #f2bc46;
+  width: 88px;
+  height: 88px;
+  border-radius: 28px;
+  background: #2a1a3a;
+  box-shadow: 0 6px 0 var(--edge), 0 0 28px #f2bc4633;
+}
+
+.mnode.visited {
+  opacity: 0.4;
+  filter: grayscale(0.7);
+}
+.mnode.current {
+  background: var(--gold);
+  color: #3a2506;
+  box-shadow: 0 0 0 5px #f2bc4633, var(--hard-sm);
+  animation: nodePulse 2.2s ease-in-out infinite;
+}
+.mnode.reach {
+  cursor: pointer;
+  animation: nodeOffer 1.8s ease-in-out infinite;
+  box-shadow: 0 0 0 4px #ffffff1f, var(--hard-sm);
+}
+.mnode.reach:hover {
+  transform: translate(-50%, -50%) scale(1.14);
+  background: #2b2059;
+  box-shadow: 0 0 0 6px #f2bc4655, 0 5px 0 var(--edge);
+}
+.mnode.locked {
+  opacity: 0.5;
+}
+@keyframes nodePulse {
+  50% {
+    box-shadow: 0 0 0 10px #f2bc4633, var(--hard-sm);
+  }
+}
+@keyframes nodeOffer {
+  50% {
+    box-shadow: 0 0 0 9px #ffffff14, var(--hard-sm);
+  }
+}
+.mnode .badge-kind {
+  position: absolute;
+  bottom: -11px;
+  font-size: 11px;
+  padding: 1px 9px;
+  border-radius: 99px;
+  background: #0d0a1e;
+  border: 2px solid var(--edge);
+  color: #cbbdf0;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+.mnode.current .badge-kind {
+  background: var(--panel);
+  color: var(--panel-ink);
+}
+
+.map-tip {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 14px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 18px;
+  border-radius: 99px;
+  background: #16113acc;
+  border: var(--bd-thin) solid #ffffff1f;
+  font-size: 14px;
+  color: #cfc4ea;
+  backdrop-filter: blur(6px);
+  max-width: 90vw;
+}

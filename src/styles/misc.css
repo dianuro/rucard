@@ -1,0 +1,336 @@
+/* ───────────────────────── 标题 ───────────────────────── */
+
+.title-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 30px;
+  text-align: center;
+}
+.title-sigil {
+  width: min(300px, 40vh);
+  aspect-ratio: 1;
+  position: relative;
+  display: grid;
+  place-items: center;
+  color: var(--gold);
+}
+.title-sigil > * {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+.title-sigil svg {
+  width: 100%;
+  height: 100%;
+}
+.title-sigil .r1 {
+  animation: spin 90s linear infinite;
+}
+.title-sigil .r2 {
+  animation: spin 46s linear infinite reverse;
+  color: var(--violet);
+  opacity: 0.7;
+}
+.title-sigil .r3 {
+  animation: breathe 6s ease-in-out infinite;
+  color: var(--rose);
+  width: 60%;
+  height: 60%;
+  margin: auto;
+}
+.title-h {
+  font-size: clamp(40px, 7vw, 78px);
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  margin: 0;
+  color: var(--panel);
+  text-shadow:
+    0 5px 0 var(--edge),
+    0 0 34px #f2bc4655;
+}
+.title-sub {
+  font-size: 14px;
+  letter-spacing: 0.6em;
+  color: #9c8ce0;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.title-desc {
+  max-width: 620px;
+  font-size: 14.5px;
+  line-height: 1.85;
+  color: #b9aada;
+}
+.title-btns {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ───────────────────────── 结算 / 奖励 / 事件 / 商店 通用 ───────────────────────── */
+
+.overlay {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  overflow: auto;
+}
+.sheet {
+  width: min(1020px, 96vw);
+  max-height: 100%;
+  padding: 24px 28px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: auto;
+}
+.sheet h2 {
+  margin: 0;
+  font-size: 25px;
+  letter-spacing: 0.18em;
+  color: var(--panel-ink);
+}
+.sheet h3 {
+  margin: 0;
+  font-size: 16px;
+  letter-spacing: 0.14em;
+  color: var(--panel-sub);
+}
+.sheet p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.9;
+  color: #463a63;
+}
+.sheet .rowbtns {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.sheet .head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.sheet .head .sub {
+  color: var(--panel-sub);
+  font-size: 14px;
+}
+
+.cardrow {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  padding: 14px 18px;
+  border-radius: 20px;
+  background: #ffffffb0;
+  border: 3px solid var(--edge);
+  box-shadow: 0 4px 0 var(--edge);
+  transition: transform 0.12s var(--ease-out), box-shadow 0.12s, background 0.2s;
+}
+.option:hover:not([disabled]) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 var(--edge);
+  background: #fff;
+}
+.option:active:not([disabled]) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--edge);
+}
+.option[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.option .lbl {
+  font-size: 16.5px;
+  font-weight: 900;
+  color: var(--panel-ink);
+}
+.option .dt {
+  font-size: 13.5px;
+  color: var(--panel-sub);
+  line-height: 1.6;
+}
+.option ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.result-banner {
+  padding: 13px 18px;
+  border-radius: 18px;
+  background: #e8f7ea;
+  border: 3px dashed #7ba833;
+  color: #2c5b18;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.result-banner.bad {
+  background: #fdeaee;
+  border-color: #c2456a;
+  color: #7c1830;
+}
+
+.shopgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
+  gap: 16px;
+}
+.shop-item {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  align-items: center;
+}
+.price {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--teal-d);
+  font-size: 15px;
+  font-weight: 900;
+}
+.shop-item .card {
+  cursor: default;
+}
+.shop-item.sold {
+  opacity: 0.4;
+}
+
+/* 牌组视图 */
+.deck-scroll {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  padding: 6px 0 12px;
+}
+
+/* ── 游戏结束 ── */
+.gameover {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  text-align: center;
+}
+.gameover h1 {
+  font-size: clamp(34px, 6vw, 64px);
+  letter-spacing: 0.3em;
+  margin: 0;
+  color: var(--panel);
+}
+.gameover.win h1 {
+  color: #ffe6a8;
+  text-shadow: 0 5px 0 var(--edge), 0 0 40px #f2bc4688;
+}
+.gameover.lose h1 {
+  color: #d6c9f2;
+}
+.gameover .stats {
+  font-size: 15px;
+  line-height: 2;
+  color: #b9aada;
+}
+
+/* toast */
+.toast-wrap {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  pointer-events: none;
+}
+.toast {
+  padding: 10px 20px;
+  border-radius: 99px;
+  background: var(--panel);
+  color: var(--panel-ink);
+  border: 3px solid var(--edge);
+  box-shadow: 0 4px 0 var(--edge), 0 10px 24px #0008;
+  font-size: 15px;
+  font-weight: 900;
+  animation: toastIn 0.36s var(--ease-pop) both;
+}
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.9);
+  }
+}
+.toast.good {
+  background: #d8f5dd;
+  border-color: #2f6b28;
+  color: #23521b;
+}
+.toast.bad {
+  background: #ffdde6;
+  border-color: #8c1c3a;
+  color: #6d0f27;
+}
+.toast.leaving {
+  animation: toastOut 0.3s var(--ease-out) both;
+}
+@keyframes toastOut {
+  to {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.94);
+  }
+}
+
+/* 提示弹层 */
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background: #06040fcc;
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  animation: fadeIn 0.2s;
+}
+
+.kbd {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 7px;
+  border: 2px solid #ffffff33;
+  background: #ffffff12;
+  font-size: 11.5px;
+  color: #cfc4ea;
+}

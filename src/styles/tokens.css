@@ -1,0 +1,383 @@
+/* ───────────────────────── 设计令牌 ─────────────────────────
+   圆角卡通：粗描边 + 底部硬投影 + 大圆角，像一叠贴纸。
+   ─────────────────────────────────────────────────────────── */
+
+:root {
+  /* 墨色与背景 */
+  --ink: #1a1233;
+  --edge: #2b1f52;
+  --edge-soft: #3a2c68;
+  --bg-0: #0d0a1e;
+  --bg-1: #16112f;
+  --bg-2: #1e1740;
+
+  /* 面板 */
+  --panel: #f7eeda;
+  --panel-2: #ece0c6;
+  --panel-3: #dccfb0;
+  --panel-ink: #2a1f43;
+  --panel-sub: #6b5c8a;
+
+  /* 强调色 */
+  --gold: #f2bc46;
+  --gold-d: #c8912a;
+  --teal: #5fd4c4;
+  --teal-d: #35a094;
+  --rose: #f0708f;
+  --rose-d: #c2456a;
+  --violet: #a184f6;
+  --violet-d: #6f4fd6;
+  --blue: #7fb0f7;
+  --blue-d: #4a7bd0;
+  --lime: #abd95f;
+  --lime-d: #7ba833;
+
+  /* 符式色 */
+  --kind-rift: #ef6c8f;
+  --kind-ward: #5fd4c4;
+  --kind-echo: #b58cf7;
+  --kind-pierce: #f2bc46;
+  --kind-link: #abd95f;
+  --kind-spiral: #7fb0f7;
+
+  /* 流派色 */
+  --arch-rift: #ef6c8f;
+  --arch-loop: #5fd4c4;
+  --arch-reso: #f2bc46;
+  --arch-none: #b4a9d6;
+
+  --ok: #7cd88a;
+  --bad: #ef6c8f;
+
+  /* 形状 */
+  --r-card: 20px;
+  --r-panel: 26px;
+  --r-chip: 14px;
+  --r-pill: 999px;
+  --bd: 3px;
+  --bd-thin: 2px;
+  --hard: 0 5px 0 var(--edge);
+  --hard-sm: 0 3px 0 var(--edge);
+  --hard-lg: 0 8px 0 var(--edge);
+
+  --font: 'ZCOOL KuaiLe', '站酷快乐体2016修订版', 'LXGW WenKai', '霞鹜文楷', 'Noto Sans SC',
+    '思源黑体 CN', 'Noto Sans CJK SC', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-num: 'ZCOOL KuaiLe', '站酷快乐体2016修订版', system-ui, sans-serif;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--bg-0);
+  color: var(--panel);
+  font-family: var(--font);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  user-select: none;
+  cursor: default;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+svg.ico {
+  display: block;
+  flex: none;
+}
+
+/* ───────────────────────── 背景法阵 ───────────────────────── */
+
+#bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 50% 8%, #241a4d 0%, #150f2e 45%, #0a0719 100%);
+}
+
+#bg .rings {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(160vh, 160vw);
+  height: min(160vh, 160vw);
+  transform: translate(-50%, -50%);
+  color: #6a55c9;
+  opacity: 0.34;
+  transition: color 0.8s var(--ease-out), opacity 0.8s var(--ease-out);
+}
+
+#bg .rings .spin-slow {
+  animation: spin 240s linear infinite;
+  transform-origin: 50% 50%;
+}
+#bg .rings .spin-rev {
+  animation: spin 160s linear infinite reverse;
+  transform-origin: 50% 50%;
+}
+#bg .rings .pulse {
+  animation: breathe 7s ease-in-out infinite;
+  transform-origin: 50% 50%;
+}
+
+body[data-mood='battle'] #bg .rings {
+  color: #c2566f;
+  opacity: 0.42;
+}
+body[data-mood='boss'] #bg .rings {
+  color: #e0a13c;
+  opacity: 0.5;
+}
+body[data-mood='win'] #bg .rings {
+  color: #58c9a0;
+  opacity: 0.45;
+}
+body[data-mood='lose'] #bg .rings {
+  color: #6a55c9;
+  opacity: 0.18;
+}
+
+/* 飘浮的尘埃 */
+#bg .dust {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+#bg .dust i {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #efe3ff;
+  opacity: 0.3;
+  animation: float linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(0.97);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.03);
+  }
+}
+@keyframes float {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.45;
+  }
+  88% {
+    opacity: 0.35;
+  }
+  100% {
+    transform: translateY(-120vh) scale(1.2);
+    opacity: 0;
+  }
+}
+
+/* ───────────────────────── 通用组件 ───────────────────────── */
+
+.btn {
+  --btn-bg: var(--panel);
+  --btn-fg: var(--panel-ink);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: var(--r-pill);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font-size: 16px;
+  font-weight: 800;
+  border: var(--bd) solid var(--edge);
+  box-shadow: var(--hard);
+  transition: transform 0.1s var(--ease-out), box-shadow 0.1s var(--ease-out), filter 0.15s;
+}
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 0 var(--edge);
+  filter: brightness(1.04);
+}
+.btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 var(--edge);
+}
+.btn[disabled] {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+  box-shadow: var(--hard-sm);
+  transform: translateY(2px);
+  cursor: not-allowed;
+}
+.btn.gold {
+  --btn-bg: var(--gold);
+  --btn-fg: #3a2506;
+}
+.btn.teal {
+  --btn-bg: var(--teal);
+  --btn-fg: #052f2b;
+}
+.btn.rose {
+  --btn-bg: var(--rose);
+  --btn-fg: #3d0716;
+}
+.btn.violet {
+  --btn-bg: var(--violet);
+  --btn-fg: #180b3d;
+}
+.btn.ghost {
+  --btn-bg: transparent;
+  --btn-fg: var(--panel);
+  box-shadow: none;
+  border-color: #ffffff33;
+}
+/* 浅色面板上的幽灵按钮需要反色，否则完全看不见 */
+.panel .btn.ghost,
+.sheet .btn.ghost {
+  --btn-fg: var(--panel-ink);
+  border-color: color-mix(in srgb, var(--edge) 30%, transparent);
+}
+.panel .btn.ghost:hover,
+.sheet .btn.ghost:hover {
+  border-color: color-mix(in srgb, var(--edge) 60%, transparent);
+}
+.btn.ghost:hover {
+  border-color: #ffffff66;
+  box-shadow: none;
+}
+.btn.sm {
+  padding: 7px 15px;
+  font-size: 14px;
+  --bd: 2.5px;
+}
+
+.panel {
+  background: var(--panel);
+  color: var(--panel-ink);
+  border: var(--bd) solid var(--edge);
+  border-radius: var(--r-panel);
+  box-shadow: var(--hard-lg);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 13px 5px 9px;
+  border-radius: var(--r-pill);
+  background: #ffffff1a;
+  border: var(--bd-thin) solid #ffffff2e;
+  font-size: 15px;
+  font-weight: 800;
+  backdrop-filter: blur(6px);
+}
+.chip .val {
+  font-variant-numeric: tabular-nums;
+}
+.chip.on-panel {
+  background: #ffffff88;
+  border-color: var(--edge);
+  color: var(--panel-ink);
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 800;
+  border: var(--bd-thin) solid var(--edge);
+}
+
+.scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #ffffff44 transparent;
+}
+.scroll::-webkit-scrollbar {
+  width: 9px;
+}
+.scroll::-webkit-scrollbar-thumb {
+  background: #ffffff33;
+  border-radius: 99px;
+}
+
+.hint {
+  color: #cfc4ea;
+  font-size: 13.5px;
+  line-height: 1.65;
+  font-weight: 700;
+}
+/* 羊皮纸面板上的提示需要深色 */
+.panel .hint,
+.sheet .hint {
+  color: var(--panel-sub);
+}
+
+/* 屏幕容器 */
+#app {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.screen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.fade-in {
+  animation: fadeIn 0.35s var(--ease-out) both;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.pop-in {
+  animation: popIn 0.42s var(--ease-pop) both;
+}
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+}
