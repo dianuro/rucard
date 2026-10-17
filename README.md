@@ -87,15 +87,17 @@ tools/
   shot.mjs             Playwright 截图各界面 → shots/*.png
   probe.mjs            打印关键元素的 boundingRect，排查布局问题
   smoke.mjs            随机策略自动跑通一整局，捕获运行期报错
+  audio.mjs            在音效总线上挂 Analyser，逐个确认不是静默
 ```
 
 ## 自验证
 
 ```bash
-mise exec -- node tools/shot.mjs            # 全部 20 个场景截图
+mise exec -- node tools/shot.mjs            # 全部场景截图 → shots/*.png
 mise exec -- node tools/shot.mjs battle map # 只截指定场景
-mise exec -- node tools/probe.mjs battle    # 布局尺寸
-mise exec -- node tools/smoke.mjs 180       # 自动跑 180 秒，检查运行期报错
+mise exec -- node tools/probe.mjs battle    # 打印关键元素的 boundingRect
+mise exec -- node tools/smoke.mjs 180       # 随机策略自动打 180 秒，检查运行期报错
+mise exec -- node tools/audio.mjs           # 验证 27 种音效都真的在合成波形
 ```
 
 改完 UI 后请跑 `shot.mjs`，用 `read` 看 `shots/*.png` 再迭代 —— 只让 `tsc` 通过不算改完。

@@ -24,11 +24,13 @@ mkdirSync(OUT, { recursive: true })
 
 const only = process.argv.slice(2)
 
-/** 打开页面、清空存档、开一局固定种子的新游戏。 */
-async function boot(page, { fresh = true } = {}) {
+/** 打开页面、清空存档、开一局固定种子的新游戏。
+ *  默认把首次进入战斗的规则提示关掉，免得盖住其它场景。 */
+async function boot(page, { fresh = true, hint = false } = {}) {
   await page.goto(BASE, { waitUntil: 'networkidle' })
   await page.waitForFunction(() => !!window.__rc)
   if (fresh) await page.evaluate((seed) => window.__rc.newRun(seed), SEED)
+  if (fresh && !hint) await page.evaluate(() => window.__rc.dismissHint())
   await page.waitForTimeout(500)
 }
 
@@ -81,6 +83,11 @@ const SCENES = {
     await page.evaluate(() => window.__rc.fight('spin'))
     await page.waitForTimeout(1400)
   },
+  hint: async (page) => {
+    await boot(page, { hint: true })
+    await page.evaluate(() => window.__rc.fight('spin'))
+    await page.waitForTimeout(1400)
+  },
   boss: async (page) => {
     await boot(page)
     await page.evaluate(() => window.__rc.fight('firstword'))
@@ -106,6 +113,16 @@ const SCENES = {
     await playCards(page, 3)
     await page.locator('.endturn').click({ timeout: 8000 })
     await page.waitForTimeout(520)
+  },
+  cardFlight: async (page) => {
+    await boot(page)
+    await page.evaluate(() => window.__rc.fight('spin'))
+    await page.waitForTimeout(1200)
+    const card = page.locator('.hand .card.playable').first()
+    await card.click()
+    await page.waitForTimeout(140)
+    await page.locator('.hand .card.playable').first().click()
+    await page.waitForTimeout(150)
   },
   clashLate: async (page) => {
     await boot(page)

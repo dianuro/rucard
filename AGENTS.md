@@ -22,6 +22,7 @@ mise exec -- npx tsc --noEmit # 只做类型检查
 mise exec -- node tools/shot.mjs [场景名...]  # 截图自验证 → shots/
 mise exec -- node tools/probe.mjs             # 打印关键元素的布局尺寸
 mise exec -- node tools/smoke.mjs [秒数]      # 随机策略自动跑通，捕获运行期报错
+mise exec -- node tools/audio.mjs             # 验证每种音效都真的在合成波形
 ```
 
 Node 版本由 `mise.toml` 固定，**一律用 `mise exec --` 前缀执行**。
@@ -61,6 +62,7 @@ tools/
   shot.mjs             Playwright 截图各界面 → shots/*.png
   probe.mjs            打印 .bar / .enemy-sigil 等元素的 boundingRect，排查布局
   smoke.mjs            随机策略自动打完整局，检查运行期报错
+  audio.mjs            在音效总线上挂 Analyser，逐个确认不是静默
 ```
 
 ## 架构约定
@@ -135,6 +137,9 @@ UI 的预演与动画回放都依赖这个性质。不要在里面读全局状�
 
 改完 UI 后跑 `node tools/shot.mjs`，用 `read` 看 `shots/*.png` 再迭代。
 `probe.mjs` 用来定位「元素尺寸是 0」「被 flex 压扁」这类看不见的布局问题。
+改完逻辑后跑 `node tools/smoke.mjs`，它会真的点手牌、走地图、选事件，捕获运行期报错。
+改了 `audio/sfx.ts` 就跑 `node tools/audio.mjs` —— 它会在音效总线上挂 Analyser，
+逐个测量 RMS，静默的音效会被标出来（无头 Chromium 需要 `--autoplay-policy=no-user-gesture-required`）。
 不要只靠 `tsc` 通过就认为改完了。
 
 `shot.mjs` 的场景通过页面内的开发期调试桥 `window.__rc` 直接驱动状态

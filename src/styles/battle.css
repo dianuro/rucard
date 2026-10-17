@@ -1,6 +1,7 @@
 /* ───────────────────────── 战斗界面 ───────────────────────── */
 
 .battle {
+  position: relative;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   height: 100%;
@@ -301,7 +302,8 @@
 /* 敌方符阵主体 */
 .enemy-sigil {
   position: relative;
-  width: min(38vh, 360px);
+  /* 高度预算：视口高 − 顶栏 − 手牌区 − 对撞盘 − 余量 */
+  width: clamp(180px, calc(100vh - 520px), 360px);
   aspect-ratio: 1;
   display: grid;
   place-items: center;
@@ -576,19 +578,21 @@
 /* ── 手牌区 ── */
 .hand-zone {
   position: relative;
-  padding: 2px 16px 12px;
+  padding: 2px 16px 16px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   min-height: 0;
 }
 .hand {
+  /* --n 由视图按手牌张数写入；牌宽随张数收缩，10 张也不会顶到结束回合按钮 */
+  --cw: min(146px, calc((100vw - 400px) / var(--n, 5)));
   display: flex;
   align-items: flex-end;
   justify-content: center;
   gap: 4px;
-  padding-bottom: 4px;
-  min-height: 198px;
+  padding-bottom: 0;
+  min-height: 200px;
 }
 .hand .card-slot {
   position: relative;
@@ -813,7 +817,7 @@
 /* 日志 */
 .battle-log {
   position: absolute;
-  left: 4px;
+  left: 14px;
   bottom: 6px;
   width: 262px;
   max-height: 138px;
@@ -855,4 +859,48 @@
   background: #140f2bcc;
   border: 2px solid #ffffff1a;
   white-space: nowrap;
+}
+
+/* 对撞闪帧 */
+.fx-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* 首次进入战斗时的规则提示 */
+.first-hint {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  transform: translate(-50%, -50%);
+  width: min(560px, 84vw);
+  padding: 20px 22px 18px;
+  border-radius: var(--r-panel);
+  background: #170f33f2;
+  border: var(--bd) solid var(--edge);
+  box-shadow: 0 10px 0 #120c26aa, 0 20px 60px #00000088;
+  backdrop-filter: blur(9px);
+  color: #ded3fa;
+  font-size: 14px;
+  line-height: 1.72;
+  letter-spacing: 0.02em;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  z-index: 40;
+  animation: hintIn 0.4s var(--ease-pop) both;
+}
+.first-hint b {
+  color: var(--gold);
+  letter-spacing: 0.1em;
+}
+.first-hint .btn {
+  align-self: flex-end;
+}
+@keyframes hintIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -46%) scale(0.94);
+  }
 }

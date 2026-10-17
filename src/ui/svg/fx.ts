@@ -154,9 +154,10 @@ export function banner(text: string, cls = 'stagger-banner', ms = 1000): void {
   ).finished.then(() => el.remove())
 }
 
-/** 元素向目标飞行，返回 promise */
-export function flyTo(from: Element, to: Element, ghost: HTMLElement, ms = 420): Promise<void> {
-  const a = from.getBoundingClientRect()
+/** 元素向目标飞行，返回 promise。
+ *  from 也可以是一个已经量好的 rect —— 源元素常常会在这一帧里被重绘掉。 */
+export function flyTo(from: Element | DOMRect, to: Element, ghost: HTMLElement, ms = 420): Promise<void> {
+  const a = from instanceof DOMRect ? from : from.getBoundingClientRect()
   const b = to.getBoundingClientRect()
   ghost.classList.add('card-fx')
   ghost.style.left = `${a.left}px`
@@ -178,4 +179,20 @@ export function flyTo(from: Element, to: Element, ghost: HTMLElement, ms = 420):
   return animation.finished.then(() => {
     ghost.remove()
   })
+}
+
+/** 全屏闪帧：对撞真正落地的那一瞬间提亮整幅画面，是最省成本也最有效的一击 */
+export function flash(color = '#fff6d8', peak = 0.26, ms = 240): void {
+  if (!layer) return
+  const el = h('div', { class: 'fx-flash' })
+  el.style.background = color
+  layer.append(el)
+  const a = el.animate([{ opacity: 0 }, { opacity: peak, offset: 0.16 }, { opacity: 0 }], {
+    duration: ms,
+    easing: 'ease-out',
+  })
+  void a.finished.then(
+    () => el.remove(),
+    () => el.remove(),
+  )
 }

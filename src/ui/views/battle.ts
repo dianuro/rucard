@@ -6,7 +6,7 @@ import { STAGGER_INTENT } from '../../core/game'
 import type { ClashStep } from '../../core/combat'
 import type { CardInst, Sym } from '../../core/types'
 import { enemySigil, orbitMarks } from '../svg/sigilRing'
-import { banner, burst, centerOf, floatText, ringFx, shake, shatter } from '../svg/fx'
+import { banner, burst, centerOf, flash, floatText, flyTo, ringFx, shake, shatter } from '../svg/fx'
 import { icoBlock, icoDeck, icoEnergy, icoLife, icoMap, icoShards, icoSound } from '../svg/runes'
 import { sfx } from '../../audio/sfx'
 import {
@@ -15,6 +15,7 @@ import {
   battleLost,
   battleWon,
   cardCost,
+  dismissHint,
   enemyPhase,
   playCard,
   prepareClash,
@@ -119,6 +120,21 @@ export function battleView(): View {
   const field = h('div', { class: 'field' }, enemyZone, board, forecast, battleLog, tipbar)
   root.append(field)
 
+  /* ── 首次进入战斗时的规则提示 ── */
+  const hintPanel = h('div', { class: 'first-hint' })
+  const hintOk = h('button', { class: 'btn teal', text: '知 道 了' })
+  hintOk.addEventListener('click', () => {
+    sfx.ui('click')
+    dismissHint()
+  })
+  const hintBody = h('div', { style: { display: 'flex', flexDirection: 'column', gap: '10px' } })
+  hintBody.innerHTML =
+    `<div><b>你的阵型</b> — 本回合打出的牌会按顺序排进下方的阵型，符式从下标 0 起占位。</div>` +
+    `<div><b>逐位对撞</b> — 结算时，敌方意图与你阵型中<b>下标相同</b>的两枚符式互相作用；多出来的一侧无人阻拦，直接命中。</div>` +
+    `<div><b>所以</b> — 真正的决策不是「打哪张牌」，而是「按什么顺序打」。</div>`
+  hintPanel.append(hintBody, hintOk)
+  root.append(hintPanel)
+
   /* ── 手牌区 ── */
   const hand = h('div', { class: 'hand' })
   const drawPileEl = h('button', { class: 'pile', title: '抽牌堆' })
@@ -174,14 +190,15 @@ export function battleView(): View {
     const b = app.get().battle
     if (!b || b.phase !== 'player') return
     const el = hand.querySelector<HTMLElement>(`.card[data-uid="${uid}"]`)
+    // 手牌区会在 playCard 之后立刻重建，所以源位置必须先量好
+    const fromRect = el ? el.getBoundingClientRect() : null
     if (el) {
-      el.animate(
-        [
-          { transform: 'translateY(-26px) scale(1.08)', opacity: 1 },
-          { transform: 'translateY(70px) scale(0.5) rotate(-8deg)', opacity: 0 },
-        ],
-        { duration: 230, easing: 'cubic-bezier(.4,0,.7,.4)', fill: 'forwards' },
-      )
+      // 手里那张牌先缩回牌堆方向，真正的「落位」由幽灵卡飞过去完成
+      el.animate([{ transform: 'translateY(-22px) scale(1.06)', opacity: 1 }, { transform: 'translateY(6px) scale(0.96)', opacity: 0 }], {
+        duration: 200,
+        easing: 'cubic-bezier(.4,0,.7,.4)',
+        fill: 'forwards',
+      })
     }
     const before = b.formation.length
     selected = null
@@ -194,16 +211,24 @@ export function battleView(): View {
         const added = (app.get().battle?.formation.length ?? 0) - before
         for (let i = 0; i < added; i++) {
           const el2 = formationEls.get(before + i)
-          if (el2) {
-            anim(
-              el2,
-              [
-                { transform: `${el2.style.transform} scale(0.2) rotate(-30deg)`, opacity: 0 },
-                { transform: `${el2.style.transform} scale(1.18) rotate(5deg)`, opacity: 1, offset: 0.65 },
-                { transform: el2.style.transform, opacity: 1 },
-              ],
-              { duration: 380, delay: i * 60, easing: 'cubic-bezier(.34,1.56,.64,1)', fill: 'forwards' },
-            )
+          if (!el2) continue
+          anim(
+            el2,
+            [
+              { transform: `${el2.style.transform} scale(0.2) rotate(-30deg)`, opacity: 0 },
+              { transform: `${el2.style.transform} scale(1.18) rotate(5deg)`, opacity: 1, offset: 0.65 },
+              { transform: el2.style.transform, opacity: 1 },
+            ],
+            { duration: 380, delay: 120 + i * 60, easing: 'cubic-bezier(.34,1.56,.64,1)', fill: 'forwards' },
+          )
+          // 只是把牌「变成」方块：一张幽灵卡从手牌位置飞向落点
+          if (i === 0 && el && fromRect) {
+            const ghost = el.cloneNode(true) as HTMLElement
+            ghost.style.width = `${fromRect.width}px`
+            const at = centerOf(el2)
+            void flyTo(fromRect, el2, ghost, 300).then(() => {
+              ringFx(at.x, at.y, '#f2bc46', 6, 58, 300, 3)
+            })
           }
         }
       })
@@ -308,6 +333,7 @@ export function battleView(): View {
 
       const power = bothAtk ? Math.max(a.v, b.v) : Math.max(a.v, b.v) * 0.6
       sfx.clash(step.outcome === 'clash-win', step.outcome === 'clash-tie', power)
+      flash(bothAtk ? (step.clashWin ? '#fff6d8' : '#e9dcff') : '#d8ecff', bothAtk ? 0.3 : 0.16, bothAtk ? 260 : 200)
       ringFx(axisPos.x, axisPos.y, bothAtk ? '#ffe9a8' : '#c9b6ff', 12, bothAtk ? 200 : 128, 500, bothAtk ? 6 : 4)
       burst(axisPos.x, axisPos.y, step.clashWin ? '#ffe9a8' : a.k === 'ward' ? '#8ef0e2' : '#d9c6ff', bothAtk ? 18 : 10, bothAtk ? 1.3 : 0.8)
       shake(bothAtk ? Math.min(0.5 + power / 13, 1.5) : 0.34)
@@ -372,6 +398,7 @@ export function battleView(): View {
     if (a) {
       if (symIsAtk(a.k)) {
         sfx.hit(Math.min(4, a.v / 3))
+        flash('#ff9fb8', 0.3, 280)
         burst(enemyPos.x, enemyPos.y, '#ffd7e2', 13, 0.95)
         ringFx(enemyPos.x, enemyPos.y, '#ff9fb8', 22, 158, 440, 4)
         jolt()
@@ -498,6 +525,8 @@ export function battleView(): View {
 
     document.body.dataset.mood = b.enemy.def.kind === 'boss' ? 'boss' : 'battle'
 
+    hintPanel.style.display = !s.hintDismissed && b.turn === 1 && b.phase === 'player' ? '' : 'none'
+
     lifeChip.querySelector('.val')!.textContent = `${Math.max(0, p.hp)}/${p.maxHp}`
     lifeChip.classList.toggle('low', p.hp <= p.maxHp * 0.3)
     energyChip.querySelector('.val')!.textContent = `${p.energy}/${p.maxEnergy}`
@@ -586,11 +615,14 @@ export function battleView(): View {
       clear(hand)
       const n = p.hand.length
       const mid = (n - 1) / 2
+      // 手牌多时整体收紧：牌宽随张数收缩，扇形也收窄
+      const tight = n > 7
+      hand.style.setProperty('--n', String(Math.max(n, 1)))
       p.hand.forEach((c, i) => {
         const wrap = h('div', { class: 'card-slot' })
         const playable = b.phase === 'player' && p.energy >= cardCost(c)
         const off = i - mid
-        wrap.style.transform = `rotate(${off * 2.3}deg) translateY(${Math.abs(off) * 6}px)`
+        wrap.style.transform = `rotate(${off * (tight ? 1.2 : 2.1)}deg) translateY(${Math.abs(off) * (tight ? 2 : 4)}px)`
         wrap.style.zIndex = String(20 + i)
         const card = cardEl(c, {
           playable,
