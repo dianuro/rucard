@@ -7,7 +7,7 @@ import type { ClashStep } from '../../core/combat'
 import type { CardInst, Sym } from '../../core/types'
 import { enemySigil, orbitMarks } from '../svg/sigilRing'
 import { relicMark } from '../svg/glyph'
-import { banner, burst, centerOf, flash, floatText, flyTo, ringFx, shake, shatter } from '../svg/fx'
+import { banner, burst, centerOf, flash, floatText, flyTo, ringFx, shake, shatter, vignette } from '../svg/fx'
 import { icoBlock, icoDeck, icoEnergy, icoLife, icoMap, icoShards, icoSound } from '../svg/runes'
 import { sfx } from '../../audio/sfx'
 import {
@@ -454,10 +454,33 @@ export function battleView(): View {
   }
 
   async function defeatSequence(): Promise<void> {
-    shake(1.7)
+    shake(1.8)
+    flash('#ef6c8f', 0.3, 340)
     const p = centerOf(sigilEl)
     burst(p.x, p.y, '#ef6c8f', 24, 1.5)
-    await wait(950)
+    ringFx(p.x, p.y, '#ef6c8f', 26, 460, 900, 6)
+    // 手牌散落，视野收拢
+    const slots = [...hand.querySelectorAll<HTMLElement>('.card-slot')]
+    slots.forEach((el, i) => {
+      const off = i - (slots.length - 1) / 2
+      el.animate(
+        [
+          { transform: el.style.transform, opacity: 1 },
+          { transform: `${el.style.transform} translate(${off * 46}px, 240px) rotate(${off * 16}deg)`, opacity: 0 },
+        ],
+        { duration: 760, delay: i * 42, easing: 'cubic-bezier(.4,0,.6,1)', fill: 'forwards' },
+      )
+    })
+    vignette('#180a1e', { in: 700, hold: 620, out: 320 })
+    sigilEl.animate(
+      [
+        { filter: 'brightness(1)', transform: 'scale(1)' },
+        { filter: 'brightness(1.9)', transform: 'scale(1.09)', offset: 0.3 },
+        { filter: 'brightness(0.5)', transform: 'scale(1.02)' },
+      ],
+      { duration: 1250, easing: 'ease-out', fill: 'forwards' },
+    )
+    await wait(1080)
   }
 
   /* ─────────── 渲染 ─────────── */

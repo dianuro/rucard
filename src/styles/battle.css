@@ -915,3 +915,10 @@
     transform: translate(-50%, -46%) scale(0.94);
   }
 }
+
+/* 收尾暗幕 */
+.fx-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}

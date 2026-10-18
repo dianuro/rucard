@@ -181,6 +181,31 @@ export function flyTo(from: Element | DOMRect, to: Element, ghost: HTMLElement, 
   })
 }
 
+/** 视野收拢：从四边压进来的暗幕，用来给一场战斗收尾（战败 / 终局） */
+export function vignette(color = '#0b0620', o: { in?: number; hold?: number; out?: number } = {}): void {
+  if (!layer) return
+  const tIn = o.in ?? 700
+  const tHold = o.hold ?? 520
+  const tOut = o.out ?? 320
+  const total = tIn + tHold + tOut
+  const el = h('div', { class: 'fx-vignette' })
+  el.style.background = `radial-gradient(circle at 50% 44%, transparent 22%, ${color} 84%)`
+  layer.append(el)
+  const a = el.animate(
+    [
+      { opacity: 0 },
+      { opacity: 1, offset: tIn / total },
+      { opacity: 1, offset: (tIn + tHold) / total },
+      { opacity: 0 },
+    ],
+    { duration: total, easing: 'ease-out' },
+  )
+  void a.finished.then(
+    () => el.remove(),
+    () => el.remove(),
+  )
+}
+
 /** 全屏闪帧：对撞真正落地的那一瞬间提亮整幅画面，是最省成本也最有效的一击 */
 export function flash(color = '#fff6d8', peak = 0.26, ms = 240): void {
   if (!layer) return
