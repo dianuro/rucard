@@ -146,14 +146,17 @@ export function chip(iconHtml: string, value: string, cls = ''): HTMLElement {
 }
 
 export function barEl(kind: 'hp' | 'poise' | 'block', text: string): { root: HTMLElement; set: (v: number, max: number) => void } {
+  const trail = h('div', { class: 'trail' })
   const fill = h('div', { class: 'fill' })
   const label = h('div', { class: 'label', text })
-  const root = h('div', { class: `bar ${kind}` }, fill, label)
+  // 血条底下拖一条「余痕」：掉血时它会慢半拍地追上来
+  const root = h('div', { class: `bar ${kind}` }, ...(kind === 'hp' ? [trail] : []), fill, label)
   return {
     root,
     set(v, max) {
       const pct = max > 0 ? Math.max(0, Math.min(1, v / max)) : 0
       fill.style.width = `${pct * 100}%`
+      trail.style.width = `${pct * 100}%`
       label.textContent = text.replace('{}', `${Math.max(0, v)}/${max}`)
     },
   }

@@ -1,6 +1,7 @@
 import { h, clear } from '../dom'
 import { cardEl, chip } from '../components/ui'
 import { icoShards } from '../svg/runes'
+import { relicMark } from '../svg/glyph'
 import { RELIC_BY_ID } from '../../core/relics'
 import { app, leaveReward, takeRewardCard, takeRewardRelic } from '../../core/game'
 import { sfx } from '../../audio/sfx'
@@ -59,7 +60,7 @@ export function rewardView(): View {
           style: { padding: '18px 22px', display: 'flex', gap: '14px', alignItems: 'center', maxWidth: '430px', cursor: 'pointer' },
         })
         const icon = h('div', { style: { color: def.color } })
-        icon.innerHTML = `<svg viewBox="0 0 100 100" width="54" height="54" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"><circle cx="50" cy="50" r="36" stroke-dasharray="8 7"/><path d="M50 18 L66 50 L50 82 L34 50 Z"/><path d="M50 34 L50 66" stroke-width="2.6"/></svg>`
+        icon.innerHTML = relicMark(rid, 54)
         const txt = h(
           'div',
           {},

@@ -88,6 +88,19 @@ const SCENES = {
     await page.evaluate(() => window.__rc.fight('spin'))
     await page.waitForTimeout(1400)
   },
+  relics: async (page) => {
+    await boot(page)
+    await page.evaluate(() => {
+      const rc = window.__rc
+      rc.app.act(() => {
+        for (const id of ['first_ring', 'prism', 'crackbox', 'ringfinger', 'balance', 'corridor_key', 'needle', 'inkstone']) {
+          if (!rc.run().relics.includes(id)) rc.run().relics.push(id)
+        }
+      })
+      rc.fight('spin')
+    })
+    await page.waitForTimeout(1400)
+  },
   boss: async (page) => {
     await boot(page)
     await page.evaluate(() => window.__rc.fight('firstword'))
@@ -152,7 +165,8 @@ const SCENES = {
       window.__rc.gotoKind('event')
     })
     await page.waitForTimeout(400)
-    await page.locator('.options .option').first().click()
+    // 事件是随机抽的，有的选项带碎片门槛会被禁用 —— 挑第一个可选的
+    await page.locator('.options .option:not([disabled])').first().click()
     await page.waitForTimeout(900)
   },
   rest: async (page) => {

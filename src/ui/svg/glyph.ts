@@ -199,6 +199,20 @@ export function glyph(seed: string, o: GlyphOpts = {}): string {
   )
 }
 
+/** 圣痕的印记：同一个 id 永远得到同一个符印。
+ *  线宽必须随显示尺寸反比放大 —— 符印是 100×100 的坐标系，
+ *  缩到 28px 还按原线宽画的话，一路乘下来只剩零点几个像素，等于看不见。 */
+export function relicMark(id: string, size = 28, color = 'currentColor'): string {
+  const weight = Math.max(0.95, Math.min(3.4, 92 / size))
+  const body = glyph(`relic:${id}`, { size: 100, detail: 1.1, weight })
+    .replace(/^<svg[^>]*>/, '')
+    .replace(/<\/svg>$/, '')
+  return (
+    `<svg viewBox="0 0 100 100" width="${size}" height="${size}" aria-hidden="true" style="overflow:visible" ` +
+    `fill="none" stroke="${color}" stroke-linejoin="round" stroke-linecap="round">${body}</svg>`
+  )
+}
+
 /** 一列不可读的短记号，用作卡片底部的「铭文」装饰 */
 export function runeStrip(seed: string, count = 14, color = 'currentColor'): string {
   const rng = new Rng(seed + '-strip')

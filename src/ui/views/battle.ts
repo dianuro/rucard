@@ -6,6 +6,7 @@ import { STAGGER_INTENT } from '../../core/game'
 import type { ClashStep } from '../../core/combat'
 import type { CardInst, Sym } from '../../core/types'
 import { enemySigil, orbitMarks } from '../svg/sigilRing'
+import { relicMark } from '../svg/glyph'
 import { banner, burst, centerOf, flash, floatText, flyTo, ringFx, shake, shatter } from '../svg/fx'
 import { icoBlock, icoDeck, icoEnergy, icoLife, icoMap, icoShards, icoSound } from '../svg/runes'
 import { sfx } from '../../audio/sfx'
@@ -43,6 +44,8 @@ export function battleView(): View {
   let hovered: string | null = null
   let busy = false
   let handSig = ''
+  /** 已经上过场的牌，用来只给「新抽到的」补发入场动画 */
+  let handUids = new Set<string>()
   let intentSig = ''
   let formSig = ''
   let relicSig = ''
@@ -219,7 +222,7 @@ export function battleView(): View {
               { transform: `${el2.style.transform} scale(1.18) rotate(5deg)`, opacity: 1, offset: 0.65 },
               { transform: el2.style.transform, opacity: 1 },
             ],
-            { duration: 380, delay: 120 + i * 60, easing: 'cubic-bezier(.34,1.56,.64,1)', fill: 'forwards' },
+            { duration: 380, delay: 120 + i * 60, easing: 'cubic-bezier(.34,1.56,.64,1)', fill: 'both' },
           )
           // 只是把牌「变成」方块：一张幽灵卡从手牌位置飞向落点
           if (i === 0 && el && fromRect) {
@@ -508,7 +511,7 @@ export function battleView(): View {
     row('灵光', `${cost} 点`, affordable ? '' : 'bad')
     const dmg = Math.max(0, b.enemy.hp - after.enemyHp)
     const hpLoss = Math.max(0, r.player.hp - after.playerHp)
-    row('对敌方造成', dmg > 0 ? `${dmg}` : '—', dmg > 0 ? 'good' : '')
+    row('对敌方造成', dmg > 0 ? `${dmg}` : after.clashWins > 0 ? '被抵消' : '—', dmg > 0 ? 'good' : '')
     row('自身承受', hpLoss > 0 ? `${hpLoss}` : '无伤', hpLoss > 0 ? 'bad' : 'good')
     if (after.playerBlock > 0) row('铸盾', `+${after.playerBlock}`, 'warn')
     if (after.clashWins > 0) row('对撞胜出', `${after.clashWins} 次`, 'good')
@@ -542,7 +545,7 @@ export function battleView(): View {
         if (!def) continue
         const d = h('div', { class: 'relic-dot', title: `【${def.name}】${def.text}` })
         d.style.setProperty('--rc', def.color)
-        d.innerHTML = `<svg viewBox="0 0 100 100" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round"><circle cx="50" cy="50" r="34" stroke-dasharray="8 7"/><path d="M50 20 L65 50 L50 80 L35 50 Z"/><path d="M50 34 L50 66" stroke-width="2.4"/></svg>`
+        d.innerHTML = relicMark(rid, 28)
         relicStrip.append(d)
       }
     }
@@ -617,12 +620,14 @@ export function battleView(): View {
       const mid = (n - 1) / 2
       // 手牌多时整体收紧：牌宽随张数收缩，扇形也收窄
       const tight = n > 7
+      const fresh = new Set<string>()
+      const nextUids = new Set(p.hand.map((c) => c.uid))
       hand.style.setProperty('--n', String(Math.max(n, 1)))
       p.hand.forEach((c, i) => {
         const wrap = h('div', { class: 'card-slot' })
         const playable = b.phase === 'player' && p.energy >= cardCost(c)
         const off = i - mid
-        wrap.style.transform = `rotate(${off * (tight ? 1.2 : 2.1)}deg) translateY(${Math.abs(off) * (tight ? 2 : 4)}px)`
+        wrap.style.transform = `rotate(${off * (tight ? 1.2 : 2.1)}deg) translateY(${Math.abs(off) * (tight ? 2 : 3)}px)`
         wrap.style.zIndex = String(20 + i)
         const card = cardEl(c, {
           playable,
@@ -647,15 +652,21 @@ export function battleView(): View {
         hand.append(wrap)
       })
       requestAnimationFrame(() => {
-        ;[...hand.children].forEach((node, i) => {
+        // 只给这一手新抽到的牌补入场动画；已经在场上的牌靠 .card-slot 的
+        // transform 过渡滑到新位置，打一张就整手重抽一遍会很吵。
+        let k = 0
+        for (const node of hand.children) {
           const el = node as HTMLElement
+          const uid = el.querySelector<HTMLElement>('.card')?.dataset.uid ?? ''
+          if (handUids.has(uid)) continue
           anim(el, [{ transform: 'translateY(130px) scale(0.65)', opacity: 0 }, { transform: el.style.transform, opacity: 1 }], {
             duration: 360,
-            delay: i * 32,
+            delay: k++ * 45,
             easing: 'cubic-bezier(.34,1.56,.64,1)',
-            fill: 'none',
+            fill: 'backwards',
           })
-        })
+        }
+        handUids = nextUids
       })
     } else {
       for (const el of hand.querySelectorAll<HTMLElement>('.card')) {

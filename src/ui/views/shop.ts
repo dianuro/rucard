@@ -1,6 +1,7 @@
 import { h, clear } from '../dom'
 import { cardEl, chip } from '../components/ui'
 import { icoShards } from '../svg/runes'
+import { relicMark } from '../svg/glyph'
 import { RELIC_BY_ID } from '../../core/relics'
 import { app, buyItem, buyRemoval, leaveShop } from '../../core/game'
 import { sfx } from '../../audio/sfx'
@@ -69,7 +70,7 @@ export function shopView(): View {
           },
         })
         const ico = h('div', { style: { color: def.color } })
-        ico.innerHTML = `<svg viewBox="0 0 100 100" width="92" height="92" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round"><circle cx="50" cy="50" r="36" stroke-dasharray="8 7"/><path d="M50 18 L66 50 L50 82 L34 50 Z"/><path d="M50 36 L50 64" stroke-width="2.4"/><circle cx="50" cy="50" r="7" fill="currentColor" stroke="none" opacity=".8"/></svg>`
+        ico.innerHTML = relicMark(it.relic, 92)
         box.append(ico, h('div', { style: { fontSize: '17px', fontWeight: '900' }, text: def.name }), h('div', { style: { fontSize: '12.5px', color: 'var(--panel-sub)', lineHeight: '1.55' }, text: def.text }))
         box.addEventListener('click', () => {
           if (it.sold) return

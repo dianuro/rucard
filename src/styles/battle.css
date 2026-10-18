@@ -439,6 +439,16 @@
   transition: width 0.45s var(--ease-out);
   width: 100%;
 }
+/* 掉血余痕：慢半拍地追上 fill，被扣掉的那一段会先亮一下 */
+.bar .trail {
+  position: absolute;
+  inset: 1px;
+  border-radius: 99px;
+  width: 100%;
+  background: #ffe9f0;
+  opacity: 0.55;
+  transition: width 0.6s ease 0.22s;
+}
 .bar .fill::after {
   content: '';
   position: absolute;
@@ -578,7 +588,7 @@
 /* ── 手牌区 ── */
 .hand-zone {
   position: relative;
-  padding: 2px 16px 16px;
+  padding: 2px 16px 14px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -591,7 +601,8 @@
   align-items: flex-end;
   justify-content: center;
   gap: 4px;
-  padding-bottom: 0;
+  /* 扇形会把两侧的牌往下压，底部留出这段余量，牌才不会被视口切掉 */
+  padding-bottom: 12px;
   min-height: 200px;
 }
 .hand .card-slot {
