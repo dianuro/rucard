@@ -94,6 +94,8 @@ export function cardEl(c: CardDef | CardInst, o: CardOpts = {}): HTMLElement {
         else if (f.t === 'damage') tl.push(`直接 ${f.n} 伤害`)
         else if (f.t === 'heal') tl.push(`回复 ${f.n}`)
         else if (f.t === 'block') tl.push(`护盾 +${f.n}`)
+        else if (f.t === 'venomBurst') tl.push(`按「蚀」×${f.mult} 造成伤害`)
+        else if (f.t === 'damagePerSym') tl.push(`每个符式 ${f.mult} 伤害`)
       }
     }
     if (c.exhaust) tl.push('消耗')

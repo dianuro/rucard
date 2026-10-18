@@ -117,7 +117,7 @@ const step = () =>
         const baseDealt = b.enemy.hp - base.enemyHp
         const baseTaken = p.hp - base.playerHp
         for (const c of pool) {
-          const res = rc.preview((f) => f.push(...rc.cardSyms(c)))
+          const res = rc.preview((f) => f.push(...rc.cardSyms(c)), c)
           const score =
             (b.enemy.hp - res.enemyHp - baseDealt) +
             (baseTaken - (p.hp - res.playerHp)) * 2.2 +

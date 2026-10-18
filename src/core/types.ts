@@ -44,6 +44,8 @@ export type CardFx =
   | { t: 'damageFromBlock'; ratio: number } // 以当前护盾为基数造成伤害
   | { t: 'heal'; n: number }
   | { t: 'stagger'; n: number } // 直接破绽
+  | { t: 'venomBurst'; mult: number } // 立即结算：按当前「蚀」造成 mult 倍伤害
+  | { t: 'damagePerSym'; mult: number } // 按阵型里的符式总数造成伤害
   | { t: 'buff'; id: BuffId; n: number }
 
 export type BuffId =

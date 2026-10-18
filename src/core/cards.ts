@@ -54,6 +54,9 @@ export const RIFT_CARDS: Def[] = [
   def('hemorrhage', '渗血', 'rift', 'uncommon', 2, [r(7)], '伤口自己会数数。', [{ t: 'damage', n: 4 }]),
   def('whetstone', '砺石', 'rift', 'common', 0, [], '磨刀不误刻字。', [{ t: 'buff', id: 'focus', n: 2 }]),
   def('severance', '断念', 'rift', 'rare', 3, [r(5), r(5), ln(4)], '念断了，字才有地方落。'),
+  // ── 蚀 的收束：前面慢，这一下一次性结清 ──
+  def('seep', '浸透', 'rift', 'uncommon', 2, [r(4)], '蚀到深处，它自己会开。', [{ t: 'venomBurst', mult: 2 }]),
+  def('rot', '溃烂', 'rift', 'rare', 3, [p(5)], '已经烂掉的地方，不必再打。', [{ t: 'venomBurst', mult: 3 }]),
 ]
 
 /* ────────────────────────── 回环 · 护盾与反击 ────────────────────────── */
@@ -78,6 +81,9 @@ export const LOOP_CARDS: Def[] = [
   def('bastion', '坚垒', 'loop', 'common', 2, [w(4), w(4)], '一层不够，就再砌一层。', [{ t: 'block', n: 4 }]),
   def('retort', '反唇', 'loop', 'uncommon', 1, [e(2), r(2), ln(2)], '是你先说的。'),
   def('caldron', '熔炉', 'loop', 'rare', 3, [w(5), w(5)], '扔进去的东西，出来时都变了个样。', [{ t: 'buff', id: 'warden', n: 2 }]),
+  def('stitch', '缝合', 'loop', 'common', 1, [w(4)], '把两边拉近一点，字才读得下去。', [{ t: 'heal', n: 3 }]),
+  def('longnight', '长夜', 'loop', 'uncommon', 2, [w(6)], '夜里很长，长到伤口自己合上。', [{ t: 'heal', n: 6 }]),
+  def('counterweight', '秤砣', 'loop', 'uncommon', 2, [w(5)], '压得住，才抬得起。', [{ t: 'damageFromBlock', ratio: 0.6 }]),
 ]
 
 /* ────────────────────────── 共鸣 · 编排与滚雪球 ────────────────────────── */
@@ -102,6 +108,8 @@ export const RESO_CARDS: Def[] = [
   def('cadence', '节拍', 'reso', 'common', 1, [w(3), w(3)], '先定拍子，再定别的。', [{ t: 'draw', n: 1 }]),
   def('reprise', '复奏', 'reso', 'uncommon', 2, [r(5), sp(), ln(2)], '再来一遍，这次重一点。'),
   def('ledgerline', '谱线', 'reso', 'common', 0, [r(2), ln(1)], '写在最下面的那一行，只有懂的人会看。'),
+  def('overturn', '翻谱', 'reso', 'uncommon', 1, [], '翻过去的那一页，已经不算了。', [{ t: 'energy', n: 2 }], { exhaust: true }),
+  def('crescendo', '渐强', 'reso', 'rare', 3, [r(3)], '一层层叠上去，最后那一下最响。', [{ t: 'damagePerSym', mult: 2 }]),
 ]
 
 /* ────────────────────────── 事件 / 特殊 ────────────────────────── */

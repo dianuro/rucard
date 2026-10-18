@@ -551,7 +551,7 @@ export function battleView(): View {
     const base = preview()
     const after = preview((f) => {
       f.push(...cardSyms(card as CardInst))
-    })
+    }, card as CardInst)
 
     el.style.display = 'flex'
     clear(el)
@@ -567,6 +567,11 @@ export function battleView(): View {
     row('自身承受', hpLoss > 0 ? `${hpLoss}` : '无伤', hpLoss > 0 ? 'bad' : 'good')
     if (after.playerBlock > 0) row('铸盾', `+${after.playerBlock}`, 'warn')
     if (after.clashWins > 0) row('对撞胜出', `${after.clashWins} 次`, 'good')
+    // 「蚀」在回合末独立结算，不算进任何一张牌的账上，单独列一行。
+    // 它自己给的那份也算数：打完这张牌之后才开始结。
+    const venomGain = (card.fx ?? []).reduce((a, f) => a + (f.t === 'buff' && f.id === 'venom' ? f.n : 0), 0)
+    const venomTick = (r.player.buffs.venom ?? 0) + venomGain
+    if (venomTick > 0) row('回合末蚀发', `${venomTick}`, 'good')
     if (after.staggered && !base.staggered) row('将触发', '僵 直', 'warn')
     if (b.enemy.stagger > 0) row('僵直加成', `伤害 ×${STAGGER_MULT}`, 'warn')
   }

@@ -457,15 +457,68 @@ export function enemyIntentSyms(b: BattleState): Sym[] {
   return syms
 }
 
-/** 灵感预演：把当前牌库与阵型算一遍，返回结算结果 */
-export function preview(mutator?: (f: Sym[]) => void): ResolveResult {
+/**
+ * 灵感预演：把「当前阵型 + 一张待出的牌」算一遍，返回结算结果。
+ *
+ * mutator 用来做「假如这样编入」的实验；card 传进来时，它自己的符式与
+ * 一次性效果都会按真实结算的次序折进去 —— 卡面上写着的每个字都必须体现在
+ * 这里，否则预演与真打出来就是两回事。
+ */
+export function preview(mutator?: (f: Sym[]) => void, card?: CardInst): ResolveResult {
   const b = app.get().battle!
   const r = run()
+  const p = r.player
   const f = b.formation.map((s) => ({ ...s }))
   mutator?.(f)
-  const focus = r.player.buffs.focus ?? 0
+
+  const focus = p.buffs.focus ?? 0
   if (focus) for (const s of f) if (s.k === 'rift' || s.k === 'pierce') s.v += focus
-  return resolveClash({
+  const surge = p.buffs.surge ?? 0
+  if (card && surge > 0) {
+    // 「涌」只加在这张牌自己的符式上，而它一定在阵型末尾
+    const n = cardSyms(card).length
+    if (n >= 3) {
+      for (let i = Math.max(0, f.length - n); i < f.length; i++) {
+        const s = f[i]
+        if (s.k !== 'link' && s.k !== 'spiral') s.v += surge
+      }
+    }
+  }
+
+  // 一次性效果在真实流程里是「打出即结算」，且落在符式对撞之前
+  let block = p.block
+  let heal = 0
+  let direct = 0
+  let poise = 0
+  for (const x of card?.fx ?? []) {
+    switch (x.t) {
+      case 'block':
+        block += x.n
+        break
+      case 'heal':
+        heal += x.n
+        break
+      case 'damage':
+        direct += x.n
+        break
+      case 'stagger':
+        poise += x.n
+        break
+      case 'damageFromBlock':
+        direct += Math.round(p.block * x.ratio)
+        break
+      case 'venomBurst':
+        direct += Math.round((p.buffs.venom ?? 0) * x.mult)
+        break
+      case 'damagePerSym':
+        direct += Math.max(1, Math.round(f.length * x.mult))
+        break
+      default:
+        break // 抽牌 / 灵光 / 状态不影响这一次结算
+    }
+  }
+
+  const res = resolveClash({
     formation: f,
     intent: enemyIntentSyms(b),
     enemyHp: b.enemy.hp,
@@ -473,9 +526,15 @@ export function preview(mutator?: (f: Sym[]) => void): ResolveResult {
     enemyPoise: b.enemy.poise,
     enemyMaxPoise: b.enemy.maxPoise,
     enemyStagger: b.enemy.stagger,
-    playerHp: r.player.hp,
-    playerBlock: r.player.block,
+    playerHp: p.hp,
+    playerBlock: block,
   })
+
+  // 治疗先落地再挨打，超出的部分会被生命上限吃掉
+  if (heal > 0) res.playerHp = Math.min(p.maxHp, res.playerHp + Math.max(0, Math.min(p.maxHp, p.hp + heal) - p.hp))
+  if (direct > 0) res.enemyHp = Math.max(0, res.enemyHp - direct)
+  if (poise > 0) res.enemyPoise += poise
+  return res
 }
 
 export function cardCost(c: CardInst): number {
@@ -606,6 +665,33 @@ function applyCardFx(fxs: NonNullable<CardInst['fx']>): void {
           b.enemy.poise += f.n
         })
         break
+      case 'venomBurst': {
+        const v = p.buffs.venom ?? 0
+        const dmg = Math.round(v * f.mult)
+        if (dmg > 0) {
+          app.act(() => {
+            b.enemy.hp -= dmg
+          })
+          sfx.hit(Math.min(3, Math.floor(dmg / 5)))
+          pushLog(`蚀发 · 蚀 ${v} × ${f.mult} = ${dmg} 伤害（无视护盾）`, 'good')
+        } else {
+          pushLog('蚀发 · 此时无「蚀」可引', 'neutral')
+        }
+        break
+      }
+      case 'damagePerSym': {
+        const n = b.formation.length
+        const dmg = Math.max(1, Math.round(n * f.mult))
+        if (dmg > 0) {
+          app.act(() => {
+            b.enemy.hp -= dmg
+            b.enemy.poise += dmg
+          })
+          sfx.hit(Math.min(3, Math.floor(dmg / 5)))
+          pushLog(`渐强 · 阵型 ${n} 个符式 × ${f.mult} = ${dmg} 伤害`, 'good')
+        }
+        break
+      }
       case 'buff':
         app.act(() => {
           p.buffs[f.id] = (p.buffs[f.id] ?? 0) + f.n

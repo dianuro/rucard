@@ -23,6 +23,7 @@ mise exec -- node tools/shot.mjs [场景名...]  # 截图自验证 → shots/
 mise exec -- node tools/probe.mjs             # 打印关键元素的布局尺寸
 mise exec -- node tools/smoke.mjs [秒数] [greedy|random]  # 自动开局跑到通关或战死
 mise exec -- node tools/audio.mjs             # 验证每种音效都真的在合成波形
+mise exec -- node tools/parity.mjs            # 逐张牌比对「预演」与「实打」，不一致就红
 ```
 
 Node 版本由 `mise.toml` 固定，**一律用 `mise exec --` 前缀执行**。
@@ -63,6 +64,7 @@ tools/
   probe.mjs            打印 .bar / .enemy-sigil 等元素的 boundingRect，排查布局
   smoke.mjs            贪心策略自动开局跑到底，检查运行期报错 + 胜率
   audio.mjs            在音效总线上挂 Analyser，逐个确认不是静默
+  parity.mjs           70 张牌各打一遍，比对预演与实打的四个数值
 ```
 
 ## 架构约定
@@ -91,8 +93,10 @@ enemyPhase()    → 僵直推进 / 清空阵型与护盾 / 抽下一招
 startPlayerTurn() → 护盾清零、灵光回满、抽牌
 ```
 
-`preview(mutator?)` 复用同一套 `resolveClash`，所以**预演结果与实际结算永远一致**。
-改动结算规则时不需要动 UI。
+`preview(mutator?, card?)` 复用同一套 `resolveClash`，所以**预演结果与实际结算永远一致**：
+传入 `card` 时，它自己的符式、一次性效果、以及它会给的持续状态都会按真实次序折进去。
+改动结算规则时不需要动 UI，但**新增任何 `CardFx` 都要同时在 `preview` 里折一次** ——
+`node tools/parity.mjs` 就是专门盯这件事的。
 
 ## 对撞规则（改 combat.ts 前必读）
 
