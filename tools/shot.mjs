@@ -195,6 +195,48 @@ const SCENES = {
     await page.locator('.topbar button', { hasText: '牌组' }).click()
     await page.waitForTimeout(800)
   },
+  /** 状态小圆牌：我方来自三件开场圣痕，敌方来自意图的附带效果 */
+  buffs: async (page) => {
+    await boot(page)
+    await page.evaluate(() => {
+      const rc = window.__rc
+      rc.app.act((s) => {
+        s.run.relics.push('inkveil', 'poisonpen', 'oilstone')
+      })
+      rc.fight('hourglass')
+    })
+    await page.waitForTimeout(1200)
+    // 快进三个敌方回合：漏刻会依次攒出「守 2」与「蓄势 2」
+    await page.evaluate(() => {
+      const rc = window.__rc
+      for (let i = 0; i < 3; i++) {
+        rc.enemyPhase()
+        rc.startPlayerTurn()
+      }
+    })
+    await page.waitForTimeout(900)
+  },
+  /** 牌组偏向裂痕时的奖励：卡池会往这条路上偏 */
+  leanReward: async (page) => {
+    await boot(page)
+    await page.evaluate(() => {
+      const rc = window.__rc
+      const p = rc.run().player
+      for (const id of ['etch', 'severance', 'lances', 'whetstone', 'corrode', 'hemorrhage']) {
+        p.discardPile.push(rc.CARD_BY_ID[id] && { ...rc.CARD_BY_ID[id], uid: 'lean-' + id, bonus: 0 })
+      }
+      rc.fight('spin')
+      rc.weakenEnemy()
+      rc.battleWon()
+    })
+    await page.waitForTimeout(900)
+  },
+  /** 新的精英：漏刻 */
+  elite2: async (page) => {
+    await boot(page)
+    await page.evaluate(() => window.__rc.fight('hourglass'))
+    await page.waitForTimeout(1500)
+  },
   pick: async (page) => {
     await boot(page)
     await page.evaluate(() => {
