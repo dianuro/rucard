@@ -48,6 +48,12 @@ export const RIFT_CARDS: Def[] = [
   def('finale', '终焉', 'rift', 'rare', 3, [r(6), r(6), r(6)], '写完这三个字，纸就没有了。'),
   def('annihilate', '抹除', 'rift', 'rare', 3, [r(14)], '不是覆盖，是让那一行从未存在。', undefined, { exhaust: true }),
   def('lances', '万箭', 'rift', 'rare', 2, [p(3), p(3), p(3)], '缝隙够多，就不需要门。'),
+  // ── 蚀：慢，但会自己长 ──
+  def('etch', '蚀刻', 'rift', 'common', 1, [r(3)], '刻下去的字会自己往里长。', [{ t: 'buff', id: 'venom', n: 2 }]),
+  def('corrode', '蛀', 'rift', 'uncommon', 1, [p(3)], '它不撞门，它把门吃掉。', [{ t: 'buff', id: 'venom', n: 2 }]),
+  def('hemorrhage', '渗血', 'rift', 'uncommon', 2, [r(7)], '伤口自己会数数。', [{ t: 'damage', n: 4 }]),
+  def('whetstone', '砺石', 'rift', 'common', 0, [], '磨刀不误刻字。', [{ t: 'buff', id: 'focus', n: 2 }]),
+  def('severance', '断念', 'rift', 'rare', 3, [r(5), r(5), ln(4)], '念断了，字才有地方落。'),
 ]
 
 /* ────────────────────────── 回环 · 护盾与反击 ────────────────────────── */
@@ -66,6 +72,12 @@ export const LOOP_CARDS: Def[] = [
   def('fortress', '壁垒', 'loop', 'rare', 2, [w(7), w(7)], '两道墙之间的空间，也算安全。'),
   def('judgement', '天平坠落', 'loop', 'rare', 3, [w(8), e(6)], '秤盘落地的那一声，就是判决。', undefined, { exhaust: true }),
   def('aegis', '不动之环', 'loop', 'rare', 2, [w(12)], '不动，是因为无处可动。'),
+  // ── 生 / 守：把护盾与回复变成每回合都会自己回来的东西 ──
+  def('sanctum', '内殿', 'loop', 'uncommon', 2, [w(3)], '里面小得只坐得下一个人，但外面的都进不来。', [{ t: 'buff', id: 'warden', n: 2 }]),
+  def('springwater', '泉眼', 'loop', 'uncommon', 1, [w(2)], '它一直在漏，漏出来的都是好的。', [{ t: 'buff', id: 'regen', n: 2 }]),
+  def('bastion', '坚垒', 'loop', 'common', 2, [w(4), w(4)], '一层不够，就再砌一层。', [{ t: 'block', n: 4 }]),
+  def('retort', '反唇', 'loop', 'uncommon', 1, [e(2), r(2), ln(2)], '是你先说的。'),
+  def('caldron', '熔炉', 'loop', 'rare', 3, [w(5), w(5)], '扔进去的东西，出来时都变了个样。', [{ t: 'buff', id: 'warden', n: 2 }]),
 ]
 
 /* ────────────────────────── 共鸣 · 编排与滚雪球 ────────────────────────── */
@@ -84,6 +96,12 @@ export const RESO_CARDS: Def[] = [
   def('coda', '无尽抄本', 'reso', 'rare', 3, [r(4), r(4), sp()], '本子翻不完，句子也写不完。'),
   def('ember', '灵光余烬', 'reso', 'rare', 0, [], '灰里还剩一点光。', [{ t: 'energy', n: 2 }], { exhaust: true }),
   def('chorus', '众声', 'reso', 'rare', 2, [r(3), r(3), r(3), r(3), ln(4)], '所有人一起念，数值就变了。'),
+  // ── 涌：把「打得长」变成收益 ──
+  def('overtone', '泛音', 'reso', 'common', 1, [r(3), r(3)], '一个音里藏着好几个。', [{ t: 'buff', id: 'surge', n: 3 }]),
+  def('cascade', '层叠', 'reso', 'uncommon', 2, [r(3), r(3), r(3)], '每一层都在往下一层倒。', [{ t: 'buff', id: 'surge', n: 2 }]),
+  def('cadence', '节拍', 'reso', 'common', 1, [w(3), w(3)], '先定拍子，再定别的。', [{ t: 'draw', n: 1 }]),
+  def('reprise', '复奏', 'reso', 'uncommon', 2, [r(5), sp(), ln(2)], '再来一遍，这次重一点。'),
+  def('ledgerline', '谱线', 'reso', 'common', 0, [r(2), ln(1)], '写在最下面的那一行，只有懂的人会看。'),
 ]
 
 /* ────────────────────────── 事件 / 特殊 ────────────────────────── */
@@ -139,13 +157,6 @@ export function starterDeck(): CardInst[] {
   for (let i = 0; i < 4; i++) deck.push(instantiate(CARD_BY_ID['ring']))
   deck.push(instantiate(CARD_BY_ID['bifid']))
   return deck
-}
-
-/** 奖励卡池：按稀有度加权 */
-export function rewardPool(arch: Archetype | null): Def[] {
-  const pool = ALL_CARDS.filter((c) => c.rarity !== 'special' && c.id !== 'cut' && c.id !== 'ring')
-  if (!arch) return pool
-  return pool
 }
 
 export function rollRarity(): Rarity {

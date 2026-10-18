@@ -14,6 +14,10 @@ export const RELICS: RelicDef[] = [
   { id: 'dumbbell', name: '哑铃形符', text: '每场战斗开始时，获得 1 回合「蓄势 3」。', color: '#7fa7f0' },
   { id: 'inkstone', name: '墨石', text: '休息处回复量 +10%。', color: '#8b6cf0' },
   { id: 'abacus', name: '静默算盘', text: '战斗胜利获得的碎片 +12。', color: '#e8b33c' },
+  { id: 'poisonpen', name: '蚀笔', text: '每场战斗开始时，敌方获得 4 点「蚀」。', color: '#7fd48a' },
+  { id: 'inkveil', name: '墨幕', text: '每场战斗开始时，获得 3 点「守」。', color: '#7fa7f0' },
+  { id: 'oilstone', name: '磨石', text: '每场战斗开始时，获得「蓄势 3」。', color: '#e8b33c' },
+  { id: 'hollowpen', name: '空心笔', text: '每回合打出的第一张 0 灵光的牌，抽 1 张牌。', color: '#6fd3c7' },
 ]
 
 export const RELIC_BY_ID: Record<string, RelicDef> = Object.fromEntries(RELICS.map((r) => [r.id, r]))

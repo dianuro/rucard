@@ -183,6 +183,95 @@ export const EVENTS: EventDef[] = [
       },
     ],
   },
+  {
+    id: 'booth',
+    name: '换字的摊',
+    text: '一个摊子，没有摊主。台面上摆着一排空格子，旁边压着一张价目表，字迹被水泡过，只看得出数字。',
+    options: [
+      {
+        label: '交 80 碎片，换走一个空',
+        detail: '失去 80 碎片，删除一张牌。',
+        effects: [fx({ t: 'shards', n: -80 }), fx({ t: 'remove' })],
+        require: (s) => s.shards >= 80,
+      },
+      {
+        label: '留下一点血，让它刻深些',
+        detail: '失去 8 点生命，强化一张牌。',
+        effects: [fx({ t: 'hurt', n: 8 }), fx({ t: 'upgrade' })],
+      },
+      {
+        label: '只看不换',
+        detail: '回复 5 点生命。',
+        effects: [fx({ t: 'heal', n: 5 })],
+      },
+    ],
+  },
+  {
+    id: 'kiln',
+    name: '窑',
+    text: '回廊侧面开着一孔窑，里面是暗红色的。靠近时，你牌组里有一张牌开始发烫——它在问你愿不愿意。',
+    options: [
+      {
+        label: '把那张牌扔进去',
+        detail: '删除一张牌，获得 45 碎片（灰烬是可以卖的）。',
+        effects: [fx({ t: 'remove' }), fx({ t: 'shards', n: 45 })],
+      },
+      {
+        label: '把手伸进去',
+        detail: '失去 14 点生命，获得一件圣痕。',
+        effects: [fx({ t: 'hurt', n: 14 }), fx({ t: 'relic' })],
+      },
+      {
+        label: '封上窑口',
+        detail: '回复 12 点生命，生命上限 −2。',
+        effects: [fx({ t: 'heal', n: 12 }), fx({ t: 'maxHp', n: -2 })],
+      },
+    ],
+  },
+  {
+    id: 'echo',
+    name: '回声壁',
+    text: '一堵弧形的墙。你还没出声，它已经在等了——它总是比你早半个字。',
+    options: [
+      {
+        label: '喊一个最短的音',
+        detail: '获得一张「无字」。',
+        effects: [fx({ t: 'addCard', id: 'nullword' })],
+      },
+      {
+        label: '喊长的',
+        detail: '失去 7 点生命，获得一张异等卡牌。',
+        effects: [fx({ t: 'hurt', n: 7 }), fx({ t: 'card', count: 1, rarity: 'uncommon' })],
+      },
+      {
+        label: '不出声',
+        detail: '回复 7 点生命，获得 20 碎片。',
+        effects: [fx({ t: 'heal', n: 7 }), fx({ t: 'shards', n: 20 })],
+      },
+    ],
+  },
+  {
+    id: 'scales',
+    name: '天平',
+    text: '一架天平，两端都空着。你站上去，它就往下沉——原来它称的不是重量。',
+    options: [
+      {
+        label: '把自己放上去',
+        detail: '失去 12 点生命，生命上限 +16。',
+        effects: [fx({ t: 'hurt', n: 12 }), fx({ t: 'maxHp', n: 16 })],
+      },
+      {
+        label: '把行囊放上去',
+        detail: '获得 100 碎片，删除一张牌。',
+        effects: [fx({ t: 'shards', n: 100 }), fx({ t: 'remove' })],
+      },
+      {
+        label: '走开',
+        detail: '回复 8 点生命。',
+        effects: [fx({ t: 'heal', n: 8 })],
+      },
+    ],
+  },
 ]
 
 export const EVENT_BY_ID: Record<string, EventDef> = Object.fromEntries(EVENTS.map((e) => [e.id, e]))
