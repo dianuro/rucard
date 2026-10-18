@@ -2,7 +2,7 @@ import { h, svgFrom } from '../dom'
 import { glyph, runeStrip } from '../svg/glyph'
 import { SYM_ICON, icoEnergy, icoPoise } from '../svg/runes'
 import { ARCH_COLOR, ARCH_NAME, RARITY_NAME, cardSummary } from '../../core/cards'
-import { KIND_DESC, KIND_NAME, KIND_SHORT, symIsAtk } from '../../core/combat'
+import { BUFF_INFO, KIND_DESC, KIND_NAME, KIND_SHORT, symIsAtk } from '../../core/combat'
 import type { CardDef, CardInst, Sym, SymKind } from '../../core/types'
 import { sfx } from '../../audio/sfx'
 
@@ -51,9 +51,12 @@ export function cardEl(c: CardDef | CardInst, o: CardOpts = {}): HTMLElement {
   cost.append(h('b', { text: c.cost === 0 ? '0' : String(c.cost) }))
   el.append(cost)
 
-  // 稀有度
+  // 稀有度（旁边跟着流派与强化标记：左上角被灵光圆占了）
   el.append(h('div', { class: 'rarity', text: RARITY_NAME[c.rarity] }))
   if ((c as CardInst).upgraded) el.append(h('div', { class: 'upmark', text: '+2' }))
+  if (arch !== 'none' && o.variant !== 'mini') {
+    el.append(h('div', { class: 'archtag', text: ARCH_NAME[arch], title: `流派：${ARCH_NAME[arch]}` }))
+  }
 
   // 符印
   const art = h('div', { class: 'art' })
@@ -85,7 +88,7 @@ export function cardEl(c: CardDef | CardInst, o: CardOpts = {}): HTMLElement {
       for (const f of c.fx) {
         if (f.t === 'draw') tl.push(`抽 ${f.n}`)
         else if (f.t === 'energy') tl.push(`灵光 +${f.n}`)
-        else if (f.t === 'buff' && f.id === 'focus') tl.push(`蓄势 +${f.n}`)
+        else if (f.t === 'buff') tl.push(`${BUFF_INFO[f.id].name} +${f.n}`)
         else if (f.t === 'stagger') tl.push(`破绽 +${f.n}`)
         else if (f.t === 'damageFromBlock') tl.push(`以护盾造成伤害`)
         else if (f.t === 'damage') tl.push(`直接 ${f.n} 伤害`)

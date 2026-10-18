@@ -14,7 +14,28 @@
  * UI 先用它做「预演」（把结果标注在意图上），再用它驱动动画回放。
  */
 
-import type { CardInst, IntentDef, Sym, SymKind } from './types'
+import type { BuffId, CardInst, IntentDef, Sym, SymKind } from './types'
+
+/** 状态的说明书。名字短到能塞进一枚小圆牌里。 */
+export interface BuffInfo {
+  name: string
+  short: string
+  color: string
+  text: string
+  /** 只在当回合有效（回合开始会被清掉） */
+  temporary?: boolean
+}
+
+export const BUFF_INFO: Record<BuffId, BuffInfo> = {
+  focus: { name: '蓄势', short: '势', color: '#e8b33c', text: '本回合内，你的「裂」「穿」每个 +n。', temporary: true },
+  surge: { name: '涌', short: '涌', color: '#c58cf0', text: '本回合内，你打出的 3 符式及以上的牌，每个符式 +n。', temporary: true },
+  venom: { name: '蚀', short: '蚀', color: '#7fd48a', text: '每回合结束时，对方受到 n 点侵蚀（无视护盾）。' },
+  regen: { name: '生', short: '生', color: '#5fd4c4', text: '每回合开始时回复 n 点生命。' },
+  warden: { name: '守', short: '守', color: '#7fa7f0', text: '每回合开始时获得 n 点护盾。' },
+}
+
+/** 按固定顺序列出场上还在生效的状态，供 UI 直接遍历 */
+export const BUFF_ORDER: BuffId[] = ['focus', 'surge', 'warden', 'regen', 'venom']
 
 export const KIND_NAME: Record<SymKind, string> = {
   rift: '裂',

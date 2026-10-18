@@ -196,12 +196,29 @@
 
 .card .upmark {
   position: absolute;
-  left: 6px;
+  right: 22px;
   top: 6px;
   z-index: 3;
   font-size: 11px;
   font-weight: 900;
   color: #4a8f3c;
+}
+
+/* 流派小签：标在稀有度左边，方便在商店与奖励里横向比较 */
+.card .archtag {
+  position: absolute;
+  right: 24px;
+  top: 7px;
+  z-index: 3;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: var(--c-arch);
+  opacity: 0.72;
+}
+.card:has(.upmark) .archtag {
+  top: 20px;
+  right: 6px;
 }
 
 /* 手牌中的卡：可打出 / 不可打出 */

@@ -13,6 +13,7 @@ import { RELIC_BY_ID, rollRelic } from './relics'
 import { EVENT_BY_ID, EVENTS } from './events'
 import { LAYERS, generateMap } from './run'
 import {
+  BUFF_INFO,
   cardSyms,
   intentSyms,
   nextIntent,
@@ -21,6 +22,8 @@ import {
   type ResolveResult,
 } from './combat'
 import type {
+  Archetype,
+  BuffId,
   CardDef,
   CardInst,
   EnemyDef,
@@ -105,6 +108,8 @@ export interface BattleState {
   clashWinsThisTurn: number
   staggeredThisBattle: boolean
   usedPrismThisTurn: boolean
+  /** 空心笔：每回合只有第一张 0 费牌能抽牌 */
+  usedZeroThisTurn?: boolean
 }
 
 export const STAGGER_INTENT: IntentDef = { name: '僵直', syms: [] }
@@ -173,6 +178,22 @@ function run(): RunState {
 
 function allCards(p: PlayerState): CardInst[] {
   return [...p.drawPile, ...p.hand, ...p.discardPile]
+}
+
+/** 牌组已经走上的路：某个流派占到两成以上，才算真的在往那个方向建。
+ *  奖励卡池按它加权，玩家才可能真的把一副牌搭出性格。 */
+export function deckLean(p: PlayerState): Archetype[] {
+  const deck = allCards(p)
+  if (!deck.length) return []
+  const cnt = new Map<Archetype, number>()
+  for (const c of deck) {
+    if (c.arch === 'none') continue
+    cnt.set(c.arch, (cnt.get(c.arch) ?? 0) + 1)
+  }
+  return [...cnt.entries()]
+    .filter(([, n]) => n / deck.length >= 0.2)
+    .sort((a, b) => b[1] - a[1])
+    .map(([k]) => k)
 }
 
 /* ─────────────────────────── 存档 ─────────────────────────── */
@@ -364,6 +385,7 @@ export function startBattle(def: EnemyDef, depth: number): void {
     clashWinsThisTurn: 0,
     staggeredThisBattle: false,
     usedPrismThisTurn: false,
+    usedZeroThisTurn: false,
   }
   r.battleHpLost = 0
   p.block = 0
@@ -382,6 +404,9 @@ export function startBattle(def: EnemyDef, depth: number): void {
   if (r.relics.includes('first_ring')) bonusDraw += 1
   if (r.relics.includes('crackbox')) p2.block += 5
   if (r.relics.includes('dumbbell')) p2.buffs.focus = (p2.buffs.focus ?? 0) + 3
+  if (r.relics.includes('oilstone')) p2.buffs.focus = (p2.buffs.focus ?? 0) + 3
+  if (r.relics.includes('inkveil')) p2.buffs.warden = (p2.buffs.warden ?? 0) + 3
+  if (r.relics.includes('poisonpen')) p2.buffs.venom = (p2.buffs.venom ?? 0) + 4
   if (r.relics.includes('needle')) {
     const atks = p2.drawPile.filter((c) => cardSyms(c).some((s) => s.k === 'rift' || s.k === 'pierce'))
     if (atks.length) atks[Math.floor(Math.random() * atks.length)].bonus += 2
@@ -423,6 +448,15 @@ export function drawCards(n: number): void {
   })
 }
 
+/** 敌方当前意图的符式，含它自己身上的「蓄势」加成。
+ *  UI 与结算共用这一个出口，看到多少就打多少。 */
+export function enemyIntentSyms(b: BattleState): Sym[] {
+  const syms = intentSyms(b.enemy.intent).map((s) => ({ ...s }))
+  const f = b.enemy.buffs.focus ?? 0
+  if (f) for (const s of syms) if (s.k === 'rift' || s.k === 'pierce') s.v += f
+  return syms
+}
+
 /** 灵感预演：把当前牌库与阵型算一遍，返回结算结果 */
 export function preview(mutator?: (f: Sym[]) => void): ResolveResult {
   const b = app.get().battle!
@@ -433,7 +467,7 @@ export function preview(mutator?: (f: Sym[]) => void): ResolveResult {
   if (focus) for (const s of f) if (s.k === 'rift' || s.k === 'pierce') s.v += focus
   return resolveClash({
     formation: f,
-    intent: intentSyms(b.enemy.intent),
+    intent: enemyIntentSyms(b),
     enemyHp: b.enemy.hp,
     enemyBlock: b.enemy.block,
     enemyPoise: b.enemy.poise,
@@ -501,6 +535,13 @@ export function playCard(uidStr: string): boolean {
 
   // 圣痕：共鸣管
   if (r.relics.includes('pipes') && syms.length >= 3) drawCards(1)
+  // 圣痕：空心笔
+  if (cost === 0 && !b.usedZeroThisTurn && r.relics.includes('hollowpen')) {
+    app.act(() => {
+      b.usedZeroThisTurn = true
+    })
+    drawCards(1)
+  }
 
   // 去向
   app.act(() => {
@@ -649,6 +690,16 @@ export function settleClash(): { won: boolean; lost: boolean } {
     sfx.stagger()
   }
 
+  // 「蚀」在回合末结算：无视护盾的持续伤害
+  const venom = p.buffs.venom ?? 0
+  if (venom > 0) {
+    app.act(() => {
+      b.enemy.hp -= venom
+    })
+    sfx.hit(1)
+    pushLog(`蚀 · 侵蚀 ${venom} 点`, 'good')
+  }
+
   const lost = p.hp <= 0
   const won = b.enemy.hp <= 0
   if (won) {
@@ -678,6 +729,7 @@ export function enemyPhase(): void {
     b.playedThisTurn = 0
     b.clashWinsThisTurn = 0
     b.usedPrismThisTurn = false
+    b.usedZeroThisTurn = false
     b.enemy.block = 0
     p.block = 0
   })
@@ -702,6 +754,47 @@ export function enemyPhase(): void {
     b.enemy.intent = ni.intent
     b.enemy.intentIndex = ni.index
   })
+
+  // 敌方身上的「守」每回合补盾
+  const ewarden = b.enemy.buffs.warden ?? 0
+  if (ewarden > 0) {
+    app.act(() => {
+      b.enemy.block += ewarden
+    })
+    pushLog(`【${def.name}】守 · 获得 ${ewarden} 点护盾`, 'special')
+  }
+
+  // 意图自带的附带效果在「抽出的那一刻」就落地：
+  // 玩家看得见敌方已经攒好了盾或蓄势，才有得打与不打的判断。
+  const fx = ni.intent.fx
+  if (fx?.length) {
+    const bits: string[] = []
+    for (const f of fx) {
+      switch (f.t) {
+        case 'block':
+          app.act(() => {
+            b.enemy.block += f.n
+          })
+          bits.push(`铸 ${f.n}`)
+          break
+        case 'buff':
+          app.act(() => {
+            b.enemy.buffs[f.id] = (b.enemy.buffs[f.id] ?? 0) + f.n
+          })
+          bits.push(`${BUFF_INFO[f.id].name} ${f.n}`)
+          break
+        case 'heal':
+          app.act(() => {
+            b.enemy.hp = Math.min(b.enemy.maxHp, b.enemy.hp + f.n)
+          })
+          bits.push(`回复 ${f.n}`)
+          break
+        default:
+          break
+      }
+    }
+    if (bits.length) pushLog(`【${def.name}】${ni.intent.name} · ${bits.join(' / ')}`, 'special')
+  }
 }
 
 /** 玩家阶段开始 */
@@ -716,8 +809,30 @@ export function startPlayerTurn(): void {
     b.phase = 'player'
     b.enemy.block = 0
     p.energy = p.maxEnergy
-    p.buffs = {}
+    // 只有标了 temporary 的状态会随回合翻开而消失，
+    // 其余（蚀 / 生 / 守）是整场战斗都在的。
+    const kept: Record<string, number> = {}
+    for (const [id, n] of Object.entries(p.buffs) as [BuffId, number][]) {
+      if (!BUFF_INFO[id]?.temporary) kept[id] = n
+    }
+    p.buffs = kept
   })
+
+  const regen = p.buffs.regen ?? 0
+  if (regen > 0 && p.hp < p.maxHp) {
+    app.act(() => {
+      p.hp = Math.min(p.maxHp, p.hp + regen)
+    })
+    pushLog(`生 · 回复 ${regen} 点`, 'good')
+  }
+  const warden = p.buffs.warden ?? 0
+  if (warden > 0) {
+    app.act(() => {
+      p.block += warden
+    })
+    pushLog(`守 · 获得 ${warden} 点护盾`, 'good')
+  }
+
   drawCards(p.handSize)
   if (r.relics.includes('ringfinger')) {
     app.act(() => {
@@ -760,15 +875,21 @@ export function battleWon(): void {
 
   const pool = ALL_CARDS.filter((c) => c.rarity !== 'special' && c.id !== 'cut' && c.id !== 'ring')
   const rng = new Rng(`${r.seed}-${r.depth}-reward-${b.playedThisBattle}`)
+  const lean = deckLean(r.player)
   const cards: CardDef[] = []
   const wantRare = kind === 'elite' ? 0.3 : 0.06
-  while (cards.length < 3) {
+  let tries = 0
+  while (cards.length < 3 && tries++ < 40) {
     const roll = rng.float()
     const rarity = roll < wantRare ? 'rare' : roll < wantRare + 0.35 ? 'uncommon' : 'common'
-    const c = rng.pick(pool.filter((x) => x.rarity === rarity))
+    let slice = pool.filter((x) => x.rarity === rarity)
+    // 六成的坑位往牌组已经走上的那条路偏，剩下四成留着「换个活法」
+    if (lean.length && rng.float() < 0.6) {
+      const biased = slice.filter((x) => lean.includes(x.arch))
+      if (biased.length) slice = biased
+    }
+    const c = rng.pick(slice)
     if (c && !cards.includes(c)) cards.push(c)
-    else if (cards.length >= 3) break
-    else if (cards.length > 8) break
   }
   const relicIds: string[] = []
   if (kind === 'elite') {

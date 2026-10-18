@@ -1,8 +1,8 @@
 import { h, anim, clear, wait } from '../dom'
 import { barEl, cardEl, chip, slotEl } from '../components/ui'
-import { STAGGER_MULT, cardSyms, formationSummary, intentSyms, symIsAtk } from '../../core/combat'
+import { BUFF_INFO, BUFF_ORDER, STAGGER_MULT, cardSyms, formationSummary, symIsAtk } from '../../core/combat'
 import { RELIC_BY_ID } from '../../core/relics'
-import { STAGGER_INTENT } from '../../core/game'
+import { STAGGER_INTENT, enemyIntentSyms } from '../../core/game'
 import type { ClashStep } from '../../core/combat'
 import type { CardInst, Sym } from '../../core/types'
 import { enemySigil, orbitMarks } from '../svg/sigilRing'
@@ -90,6 +90,7 @@ export function battleView(): View {
   const poiseBar = barEl('poise', '韧性 {}')
   const badgeWrap = h('div', { class: 'bar-wrap' })
   const bars = h('div', { class: 'bars' }, h('div', { class: 'bar-wrap' }, hpBar.root), h('div', { class: 'bar-wrap' }, poiseBar.root), badgeWrap)
+  const enemyBuffs = h('div', { class: 'buff-row' })
   const enemyPlate = h(
     'div',
     { class: 'enemy-plate' },
@@ -97,6 +98,7 @@ export function battleView(): View {
     enemyName,
     enemyTitle,
     bars,
+    enemyBuffs,
   )
 
   const enemyZone = h('div', { class: 'enemy-zone', title: '点击此处打出选中的牌' }, sigilEl, enemyPlate)
@@ -116,11 +118,12 @@ export function battleView(): View {
 
   const board = h('div', { class: 'board' }, intentWrap, axis, formZone)
 
+  const playerBuffs = h('div', { class: 'buff-row player-buffs' })
   const forecast = h('div', { class: 'forecast', style: { display: 'none' } })
   const battleLog = h('div', { class: 'battle-log' })
   const tipbar = h('div', { class: 'tipbar' })
 
-  const field = h('div', { class: 'field' }, enemyZone, board, forecast, battleLog, tipbar)
+  const field = h('div', { class: 'field' }, enemyZone, board, playerBuffs, forecast, battleLog, tipbar)
   root.append(field)
 
   /* ── 首次进入战斗时的规则提示 ── */
@@ -485,6 +488,32 @@ export function battleView(): View {
 
   /* ─────────── 渲染 ─────────── */
 
+  /** 状态小圆牌：字段少的可怜，干脆用短名当图标，配上数值和一句说明 */
+  function renderBuffs(container: HTMLElement, buffs: Record<string, number>): void {
+    const active = BUFF_ORDER.filter((id) => (buffs[id] ?? 0) > 0)
+    const sig = active.map((id) => `${id}${buffs[id]}`).join(',')
+    if (container.dataset.sig === sig) return
+    const before = container.dataset.sig ?? ''
+    container.dataset.sig = sig
+    container.textContent = ''
+    container.style.display = active.length ? 'flex' : 'none'
+    for (const id of active) {
+      const info = BUFF_INFO[id]
+      const n = buffs[id]
+      const pill = h('div', { class: 'buff-pill', title: `【${info.name}】${info.text.replace('n', String(n))}` })
+      pill.style.setProperty('--bc', info.color)
+      pill.append(h('span', { class: 'bn', text: info.short }), h('span', { class: 'bv', text: String(n) }))
+      container.append(pill)
+      // 只有「新出现」的状态才弹一下，数值变化时不要整排重播
+      if (!before.includes(id)) {
+        anim(pill, [{ transform: 'scale(.4) translateY(6px)', opacity: 0 }, { transform: 'none', opacity: 1 }], {
+          duration: 320,
+          easing: 'cubic-bezier(.34,1.56,.64,1)',
+        })
+      }
+    }
+  }
+
   function renderLine(
     container: HTMLElement,
     syms: (Sym | null)[],
@@ -610,8 +639,11 @@ export function battleView(): View {
       badgeWrap.style.display = badgeWrap.children.length ? 'flex' : 'none'
     }
 
+    renderBuffs(enemyBuffs, e.buffs)
+    renderBuffs(playerBuffs, p.buffs)
+
     const isStagger = e.intent === STAGGER_INTENT
-    const isyms = intentSyms(e.intent)
+    const isyms = enemyIntentSyms(b)
     const cols = Math.max(isyms.length, b.formation.length, 1)
     const padTo = (list: (Sym | null)[]): (Sym | null)[] =>
       list.length >= cols ? list : [...list, ...Array(cols - list.length).fill(null)]

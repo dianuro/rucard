@@ -3,7 +3,8 @@ import { cardEl, chip } from '../components/ui'
 import { icoShards } from '../svg/runes'
 import { relicMark } from '../svg/glyph'
 import { RELIC_BY_ID } from '../../core/relics'
-import { app, leaveReward, takeRewardCard, takeRewardRelic } from '../../core/game'
+import { ARCH_NAME } from '../../core/cards'
+import { app, deckLean, leaveReward, takeRewardCard, takeRewardRelic } from '../../core/game'
 import { sfx } from '../../audio/sfx'
 import { burst, centerOf } from '../svg/fx'
 import type { View } from './types'
@@ -30,7 +31,19 @@ export function rewardView(): View {
     const title = s.screen.t === 'reward' ? (s.screen.kind === 'elite' ? '仪典已破' : '残响散去') : '回廊'
     const sheet = h('div', { class: 'panel sheet' })
     const head = h('div', { class: 'head' }, h('h2', { text: title }), chip(icoShards(18), `+${o.shards}`, 'on-panel'))
-    sheet.append(head, h('h3', { text: '取走一张符卡' }))
+    const pickTitle = h('h3', { text: '取走一张符卡' })
+    // 奖励卡池按牌组已有的流派加权，这里明说一句，玩家才知道自己在被往哪儿推
+    const lean = deckLean(r.player)
+    if (lean.length) {
+      pickTitle.append(
+        h('span', {
+          class: 'lean',
+          text: `牌组倾向 · ${lean.map((a) => ARCH_NAME[a]).join(' / ')}`,
+          title: '奖励卡池会优先给出与牌组流派相符的牌',
+        }),
+      )
+    }
+    sheet.append(head, pickTitle)
 
     const row = h('div', { class: 'cardrow' })
     for (const def of o.cards) {
