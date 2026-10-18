@@ -5,12 +5,13 @@ export const LAYERS = 15
 export const NODE_W = 150
 export const NODE_H = 104
 
-/** 每层的节点数量分布（第 0 层为起点，最后一层为 BOSS） */
-function layerSizes(layer: number): number {
+/** 每层的节点数量分布（第 0 层为起点，最后一层为 BOSS）。
+ *  随机源必须和连线用的是同一条流 —— 用 Math.random 的话同一个种子每次开出来的地图都不一样。 */
+function layerSizes(layer: number, rng: Rng): number {
   if (layer === 0) return 2
   if (layer === LAYERS - 1) return 1
   if (layer === LAYERS - 2) return 2
-  const rnd = Math.random()
+  const rnd = rng.float()
   if (rnd < 0.34) return 2
   if (rnd < 0.78) return 3
   return 4
@@ -41,7 +42,7 @@ export function generateMap(seed: number): RunMap {
   const STEP = 300
 
   for (let l = 0; l < LAYERS; l++) {
-    const count = layerSizes(l)
+    const count = layerSizes(l, rng)
     const ids: string[] = []
     for (let i = 0; i < count; i++) {
       const id = `n${l}_${i}`

@@ -177,21 +177,48 @@ function allCards(p: PlayerState): CardInst[] {
 
 /* ─────────────────────────── 存档 ─────────────────────────── */
 
+/** 存档要连「正在进行中的那件事」一起存：只存 run + screen 的话，
+ *  读档回到奖励/商店/遗匣界面时对应的 offer/shop/eventResult 已经不在了。 */
+interface SaveData {
+  run: RunState
+  screen: Screen
+  battle?: BattleState | null
+  pending?: ResolveResult | null
+  pick?: PickState | null
+  offer?: Offer | null
+  shop?: ShopState | null
+  eventResult?: string | null
+  eventChosen?: number | null
+}
+
 export function save(): void {
   const s = app.get()
   if (!s.run) return
   try {
-    localStorage.setItem('rucard.save', JSON.stringify({ run: s.run, screen: s.screen }))
+    const data: SaveData = {
+      run: s.run,
+      screen: s.screen,
+      battle: s.battle,
+      pending: s.pending,
+      pick: s.pick,
+      offer: s.offer,
+      shop: s.shop,
+      eventResult: s.eventResult,
+      eventChosen: s.eventChosen,
+    }
+    localStorage.setItem('rucard.save', JSON.stringify(data))
   } catch {
     /* 忽略 */
   }
 }
 
-export function loadSave(): { run: RunState; screen: Screen } | null {
+export function loadSave(): SaveData | null {
   try {
     const raw = localStorage.getItem('rucard.save')
     if (!raw) return null
-    return JSON.parse(raw)
+    const data = JSON.parse(raw) as SaveData
+    if (!data || !data.run || !data.screen) return null
+    return data
   } catch {
     return null
   }
@@ -215,11 +242,51 @@ export function toTitle(): void {
 export function continueRun(): boolean {
   const sv = loadSave()
   if (!sv) return false
+  const b = sv.battle ?? null
+
+  // 敌人定义是 JSON 出来的副本，按 id 接回表里的那一份，
+  // 顺便把「当前意图」也指回 def.intents 里的对象
+  if (b) {
+    const def = ENEMY_BY_ID[b.enemy.def.id] ?? b.enemy.def
+    b.enemy.def = def
+    const it = def.intents.find((x) => x.name === b.enemy.intent.name)
+    if (it) b.enemy.intent = it
+  }
+
+  // 界面需要的东西不在存档里就退回地图 —— 免得读出一个空界面
+  let screen = sv.screen
+  const hasPick = !!sv.pick
+  if (screen.t === 'battle' && !b) screen = { t: 'map' }
+  if (screen.t === 'reward' && !sv.offer) screen = { t: 'map' }
+  if (screen.t === 'shop' && !sv.shop) screen = { t: 'map' }
+  if (screen.t === 'event' && !EVENT_BY_ID[screen.id]) screen = { t: 'map' }
+
   app.act((s) => {
     s.run = sv.run
-    s.screen = sv.screen.t === 'battle' ? { t: 'map' } : sv.screen
-    s.battle = null
+    s.battle = screen.t === 'battle' ? b : null
+    s.pending = screen.t === 'battle' ? (sv.pending ?? null) : null
+    s.screen = screen
+    s.pick = hasPick ? sv.pick! : null
+    s.offer = sv.offer ?? null
+    s.shop = sv.shop ?? null
+    s.eventResult = sv.eventResult ?? null
+    s.eventChosen = sv.eventChosen ?? null
   })
+
+  // 存档正好写在对撞回放中间时，把这一回合静默算完，免得卡在 'clash'
+  const st = app.get()
+  if (st.battle && st.battle.phase === 'clash') {
+    const steps = st.pending ? st.pending.steps : prepareClash()
+    for (const step of steps) applyClashStep(step)
+    const { won, lost } = settleClash()
+    if (won) battleWon()
+    else if (lost) battleLost()
+    else {
+      enemyPhase()
+      startPlayerTurn()
+    }
+  }
+  save()
   return true
 }
 
@@ -260,8 +327,9 @@ export function reachable(): MapNode[] {
 
 /* ─────────────────────────── 战斗 ─────────────────────────── */
 
-function chooseEnemy(kind: NodeKind, depth: number): EnemyDef {
-  const rng = new Rng(run().seed + depth * 977 + Math.floor(Math.random() * 9999))
+function chooseEnemy(kind: NodeKind, depth: number, key: string): EnemyDef {
+  // 同一个种子的同一个节点永远遇到同一个敌人（顺带堵掉反复读档刷敌人）
+  const rng = new Rng(`${run().seed}:${kind}:${depth}:${key}`)
   const pool = kind === 'elite' ? ELITE_POOL : kind === 'boss' ? BOSS_POOL : NORMAL_POOL
   const base = rng.pick(pool)
   return scaleEnemy(base, depth)
@@ -776,7 +844,7 @@ function enterNode(node: MapNode): void {
     case 'battle':
     case 'elite':
     case 'boss':
-      startBattle(chooseEnemy(node.kind, node.layer), node.layer)
+      startBattle(chooseEnemy(node.kind, node.layer, node.id), node.layer)
       break
     case 'event': {
       const avail = EVENTS.filter((e) => !r.usedEvents.includes(e.id))
@@ -1210,6 +1278,9 @@ if (import.meta.env.DEV) {
       reachable,
       toTitle,
       newRun,
+      continueRun,
+      loadSave,
+      save,
       startBattle,
       gotoKind,
       fight,
