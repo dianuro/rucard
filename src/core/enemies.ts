@@ -121,7 +121,7 @@ export const ENEMIES: EnemyDef[] = [
     plan: 'cycle',
     intents: [
       { name: '垂落', syms: [r(6), r(6), r(6)] },
-      { name: '供养', syms: [w(8), w(6)] },
+      { name: '供养', syms: [w(7), w(5)] },
       { name: '倾泻', syms: [p(9), r(4)] },
       { name: '熄灭', syms: [e(6), e(6)] },
     ],
@@ -138,7 +138,7 @@ export const ENEMIES: EnemyDef[] = [
     plan: 'cycle',
     intents: [
       { name: '起纬', syms: [r(4), r(4), r(4)] },
-      { name: '收经', syms: [w(6), w(6), w(6)] },
+      { name: '收经', syms: [w(5), w(5), w(4)] },
       { name: '断线', syms: [p(8), p(4)] },
       { name: '成匹', syms: [r(7), e(5), r(7)] },
     ],
@@ -155,7 +155,7 @@ export const ENEMIES: EnemyDef[] = [
     plan: 'cycle',
     intents: [
       { name: '催收', syms: [r(9), r(5)] },
-      { name: '计息', syms: [w(12)] },
+      { name: '计息', syms: [w(9)] },
       { name: '核销', syms: [e(7), e(7)] },
       { name: '结转', syms: [p(10), r(6)] },
     ],
@@ -167,16 +167,16 @@ export const ENEMIES: EnemyDef[] = [
     name: '最初之字',
     title: '万物都是它的抄本，而它从未被读懂',
     kind: 'boss',
-    hp: [230, 230],
+    hp: [200, 200],
     poise: 90,
     color: '#e8b33c',
     accent: '#e2688a',
     plan: 'cycle',
     intents: [
       { name: '第一划', syms: [r(7), r(7), w(6)] },
-      { name: '第二划', syms: [w(10), e(8)] },
+      { name: '第二划', syms: [w(8), e(7)] },
       { name: '第三划', syms: [r(5), r(5), r(5), r(5)] },
-      { name: '闭卷', syms: [w(14), w(8)] },
+      { name: '闭卷', syms: [w(10), w(6)] },
       { name: '誊写', syms: [p(9), r(8), e(6)] },
       { name: '终稿', syms: [r(10), r(10), r(10)] },
     ],
@@ -189,16 +189,17 @@ export const NORMAL_POOL = ENEMIES.filter((e2) => e2.kind === 'normal')
 export const ELITE_POOL = ENEMIES.filter((e2) => e2.kind === 'elite')
 export const BOSS_POOL = ENEMIES.filter((e2) => e2.kind === 'boss')
 
-/** 按幕内进度缩放敌人强度 */
+/** 按幕内进度缩放敌人强度。
+ *  玩家每回合能打出的牌数受灵光限制（3 张），整局只涨「每张牌的值」，
+ *  所以三条曲线都压得比较平：牌面的值涨不过敌人就变成打不动的墙。 */
 export function scaleEnemy(def: EnemyDef, depth: number): EnemyDef {
-  const k = 1 + depth * 0.14
   return {
     ...def,
-    hp: [Math.round(def.hp[0] * k), Math.round(def.hp[1] * k)],
-    poise: Math.round(def.poise * (1 + depth * 0.1)),
+    hp: [Math.round(def.hp[0] * (1 + depth * 0.06)), Math.round(def.hp[1] * (1 + depth * 0.06))],
+    poise: Math.round(def.poise * (1 + depth * 0.03)),
     intents: def.intents.map((it) => ({
       ...it,
-      syms: it.syms.map((s) => ({ ...s, v: Math.round(s.v * (1 + depth * 0.07)) })),
+      syms: it.syms.map((s) => ({ ...s, v: Math.round(s.v * (1 + depth * 0.04)) })),
     })),
   }
 }

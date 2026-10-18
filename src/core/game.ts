@@ -300,11 +300,13 @@ export function startBattle(def: EnemyDef, depth: number): void {
   r.battleHpLost = 0
   p.block = 0
   p.energy = p.maxEnergy
+  // 先收拢整副牌组再清空各堆 —— 顺序反了的话，手牌与弃牌会在换场时凭空消失
+  const deck = allCards(p)
   p.hand = []
   p.discardPile = []
   p.exhaustPile = []
   p.buffs = {}
-  p.drawPile = new Rng(`${def.id}${r.seed}` + depth).shuffle(allCards(p))
+  p.drawPile = new Rng(`${def.id}${r.seed}` + depth).shuffle(deck)
   const p2 = { ...p }
 
   // 圣痕：战斗开始
@@ -1217,6 +1219,7 @@ if (import.meta.env.DEV) {
       travel,
       openShop,
       openTreasure,
+      leaveTreasure,
       leaveShop,
       leaveReward,
       takeRewardCard,
@@ -1232,6 +1235,8 @@ if (import.meta.env.DEV) {
       cardCost,
       canPlay,
       playCard,
+      cardSyms,
+      intentSyms,
       prepareClash,
       applyClashStep,
       settleClash,

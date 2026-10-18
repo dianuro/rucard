@@ -86,7 +86,7 @@ src/
 tools/
   shot.mjs             Playwright 截图各界面 → shots/*.png
   probe.mjs            打印关键元素的 boundingRect，排查布局问题
-  smoke.mjs            随机策略自动跑通一整局，捕获运行期报错
+  smoke.mjs            贪心策略自动开局跑到底，检查运行期报错 + 胜率
   audio.mjs            在音效总线上挂 Analyser，逐个确认不是静默
 ```
 
@@ -96,7 +96,7 @@ tools/
 mise exec -- node tools/shot.mjs            # 全部场景截图 → shots/*.png
 mise exec -- node tools/shot.mjs battle map # 只截指定场景
 mise exec -- node tools/probe.mjs battle    # 打印关键元素的 boundingRect
-mise exec -- node tools/smoke.mjs 180       # 随机策略自动打 180 秒，检查运行期报错
+mise exec -- node tools/smoke.mjs 180       # 贪心策略自动打 180 秒：查报错 + 量胜率
 mise exec -- node tools/audio.mjs           # 验证 27 种音效都真的在合成波形
 ```
 
