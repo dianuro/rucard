@@ -8,9 +8,9 @@
 ## 快速开始
 
 ```bash
-mise exec -- npm install      # 首次
-mise exec -- npm run dev      # http://127.0.0.1:5188
-mise exec -- npm run build    # 类型检查 + 生产构建 → dist/
+npm install      # 首次
+npm run dev      # http://127.0.0.1:5188
+npm run build    # 类型检查 + 生产构建 → dist/
 ```
 
 Node 版本由 `mise.toml` 固定（24.22.0），所有命令都走 `mise exec --` 前缀。
